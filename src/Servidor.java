@@ -17,6 +17,7 @@ public class Servidor {
     private static final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
     private static PublicKey llavePublica;
     private static PrivateKey llavePrivada;
+    private ProtocoloServidor protocoloServidor = new ProtocoloServidor();
 
     public static void main(String args[]) throws IOException {
     boolean continuar0 = true;
@@ -36,6 +37,7 @@ public class Servidor {
 
         }
         else if (opcion == 2){
+
             ServerSocket ss = null;
             boolean continuar = true;
             int threadId = 0; 
