@@ -59,11 +59,11 @@ public class ProtocoloServidor {
                 break;
 
             case 3:
-                if (inputLine.equalsIgnoreCase("OK")) {
+                if (inputLine.equalsIgnoreCase("TERMINAR")) {
                     outputLine = "ADIOS";
                     estado++;
                 } else {
-                    outputLine = "ERROR. Esperaba OK";
+                    outputLine = "ERROR. Esperaba TERMINAR";
                     estado = 0;
                 }
                 break;
