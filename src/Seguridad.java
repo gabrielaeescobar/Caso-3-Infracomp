@@ -1,11 +1,14 @@
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Seguridad {
     
@@ -36,6 +39,7 @@ public class Seguridad {
      }
     }
 
+    // Calcular firma RSA
     public static String calcularFirma(String mensaje, PrivateKey llavePrivada){
         try{
             Signature firma = Signature.getInstance("SHA1withRSA");
@@ -77,5 +81,21 @@ public class Seguridad {
             System.err.println("Error al descifrar el mensaje: " + e.getMessage());
             e.printStackTrace();
             return null;        }
+    }
+
+    //calcular Hmac
+    public static String calcularHMAC(SecretKeySpec llaveAutenticacion, String userId) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA384");
+            mac.init(llaveAutenticacion);
+            byte[] hmacBytes = mac.doFinal(userId.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hmacBytes);
+
+
+        } catch (Exception e) {
+            System.err.println("Error al calcular el HMAC: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 }
