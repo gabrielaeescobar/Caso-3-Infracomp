@@ -72,7 +72,7 @@ public class ProtocoloCliente {
         String fromServer = pIn.readLine();
         if (fromServer != null) {
             int estadoNuevo= verificarRta(fromServer, pIn, pOut);
-            if (estadoNuevo!= 3){
+            if (estadoNuevo!= 0){
                 return estadoNuevo; // Avanza al siguiente estado de comando
 
             }
