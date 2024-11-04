@@ -16,7 +16,7 @@ public class ProtocoloServidor {
 
     public static void procesar(BufferedReader pIn, PrintWriter pOut) throws IOException {
     String inputLine;
-    String outputLine;
+    String outputLine = null;
     int estado = 0;
     cargarLlavePrivada();
     cargarLlavePublica();
@@ -25,13 +25,12 @@ public class ProtocoloServidor {
         System.out.println("Entrada a procesar: " + inputLine);
         switch (estado) {
             case 0:
-                if (inputLine.equalsIgnoreCase("Hola")) {
-                    outputLine = "Listo";
+                //1.            
+                if (inputLine.equalsIgnoreCase("SECINIT")) {
+                    System.out.println("1.SECINIT");
                     estado++;
-                } else {
-                    outputLine = "ERROR. Esperaba Hola";
-                    estado = 0;
                 }
+                outputLine = null;
                 break;
 
             case 1:
@@ -60,7 +59,11 @@ public class ProtocoloServidor {
                 outputLine = "ERROR";
                 estado = 0;
         }
-        pOut.println(outputLine);
+
+        if (outputLine != null) {
+            pOut.println(outputLine);
+        }
+        
     }
 }
 

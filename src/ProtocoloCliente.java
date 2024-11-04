@@ -15,6 +15,7 @@ public class ProtocoloCliente {
         String fromServer;
         String fromUser;
         boolean ejecutar = true;
+        boolean esperarRespuesta = true; 
 
         cargarLlavePublica();
 
@@ -23,6 +24,9 @@ public class ProtocoloCliente {
             System.out.println("Escriba el msj para enviar: ");
             fromUser = stdIn.readLine();
 
+            if (fromUser.equalsIgnoreCase("SECINIT")) {
+                esperarRespuesta = false;
+            }
 
             if (fromUser != null && !fromUser.equals("-1")) {
                 System.out.println("El usuario escribió: " + fromUser);
@@ -40,7 +44,7 @@ public class ProtocoloCliente {
             // lee lo q llega por la red
             // si lo que llega del servidor no es null
             // observe la asignacion luego de la condicion
-            if ((fromServer = pIn.readLine())!= null){
+            if (esperarRespuesta && (fromServer = pIn.readLine()) != null) {
                 System.out.println("Respuesta del Servidor: " + fromServer);
             }
         }
