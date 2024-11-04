@@ -14,12 +14,12 @@ public class ProtocoloCliente {
             System.out.println("Escriba el msj para enviar: ");
             fromUser = stdIn.readLine();
 
-            //si lo q ingresa el usuario no es null, y es diferente de "-1"
-            // if (fromUser != null && !fromUser.equals("-1"))
-            if (fromUser!= null){
-                System.out.println("El usuario escribio: "+ fromUser);
-                // si lo que ingtresa el usuario es "OK"
-                if (fromUser.equalsIgnoreCase("OK")){
+
+            if (fromUser != null && !fromUser.equals("-1")) {
+                System.out.println("El usuario escribió: " + fromUser);
+                
+                // si lo que ingresa el usuario es "OK"
+                if (fromUser.equalsIgnoreCase("OK")) {
                     ejecutar = false;
                 }
 

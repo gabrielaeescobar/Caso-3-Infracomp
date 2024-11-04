@@ -7,7 +7,7 @@ public class Servidor {
     public static void main(String args[]) throws IOException {
     ServerSocket ss = null;
     boolean continuar = true;
-    // aquí va una variable para controlar los identificadores de los threads
+    int threadId = 0; 
 
     System.out.println("Main Server ...");
 
@@ -25,7 +25,7 @@ public class Servidor {
         Socket socket = ss.accept();
 
         // crear el thread con el socket y el id
-        ThreadServidor thread = new ThreadServidor(socket, 0);
+        ThreadServidor thread = new ThreadServidor(socket, threadId++);
         // aquí debe hacer una modificación porque todos los threads tienen un identificador diferente
 
         // start
