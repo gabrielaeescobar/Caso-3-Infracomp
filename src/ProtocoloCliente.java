@@ -27,6 +27,7 @@ public class ProtocoloCliente {
                 pOut.println(fromUser);
 
             }
+            else System.out.println("No fue valida la entrada");
             // lee lo q llega por la red
             // si lo que llega del servidor no es null
             // observe la asignacion luego de la condicion

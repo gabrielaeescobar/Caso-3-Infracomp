@@ -12,18 +12,22 @@ public class Cliente {
         Socket socket = null;
         PrintWriter escritor = null;
         BufferedReader lector = null;
+        BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
+
 
         System.out.println("Comienza cliente");
         try {
             socket = new Socket(SERVIDOR, PUERTO);
             escritor = new PrintWriter(socket.getOutputStream(), true);
             lector = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            ProtocoloCliente.procesar(teclado, lector, escritor);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        escritor.println("Hola Servidor");
-        System.out.println(lector.readLine());
+        // escritor.println("Hola");
+        // System.out.println(lector.readLine());
         
         socket.close();
         escritor.close();
