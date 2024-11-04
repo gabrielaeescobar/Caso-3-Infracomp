@@ -201,7 +201,7 @@ public class ProtocoloCliente {
             String uidCifrado = Seguridad.cifradoSimetrico(uid, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("UID cifrado: " + uidCifrado);
             pOut.println(uidCifrado); // Enviar el UID cifrado al servidor
-            System.out.println("13. Enviar C(K_AB1, uid)");
+            System.out.println("13a. Enviar C(K_AB1, uid)");
             return 6;
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el UID: " + e.getMessage());
