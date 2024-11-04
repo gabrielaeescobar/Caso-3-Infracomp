@@ -15,18 +15,44 @@ public class ProtocoloCliente {
         String fromServer;
         String fromUser;
         boolean ejecutar = true;
-        boolean esperarRespuesta = true; 
+        boolean esperarRespuesta = true;
+        boolean enviarReto = false;
 
         cargarLlavePublica();
 
+        // Paso 2a: Generar el reto y cifrarlo
+        String reto = "12345"; // puedes usar un número aleatorio o un valor específico
+        String retoCifrado = "";
+
         while (ejecutar){
+            if (enviarReto){
+                try {
+                    retoCifrado = Seguridad.cifradoAsimetrico(reto, llavePublica);
+                    System.out.println("2a. Cifrar reto");
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return; // termina si ocurre un error
+                }
+        
+                pOut.println(retoCifrado);  // Paso 2b: enviar el reto cifrado
+                System.out.println("2b. Enviar reto cifrado");
+
+                enviarReto = false;         // Reinicia la variable para no enviar el reto de nuevo
+                
+            }
+
             //lee del teclado
             System.out.println("Escriba el msj para enviar: ");
             fromUser = stdIn.readLine();
+            
+
 
             if (fromUser.equalsIgnoreCase("SECINIT")) {
                 esperarRespuesta = false;
+                enviarReto = true;
             }
+
 
             if (fromUser != null && !fromUser.equals("-1")) {
                 System.out.println("El usuario escribió: " + fromUser);

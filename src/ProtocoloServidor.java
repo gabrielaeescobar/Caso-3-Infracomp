@@ -21,7 +21,7 @@ public class ProtocoloServidor {
     cargarLlavePrivada();
     cargarLlavePublica();
 
-    while (estado < 3 && (inputLine = pIn.readLine()) != null) {
+    while (estado < 4 && (inputLine = pIn.readLine()) != null) {
         System.out.println("Entrada a procesar: " + inputLine);
         switch (estado) {
             case 0:
@@ -34,6 +34,19 @@ public class ProtocoloServidor {
                 break;
 
             case 1:
+                // Estado 1: Recibe el reto cifrado y lo descifra
+                try {
+                    String retoDescifrado = Seguridad.descifradoAsimetrico(inputLine, llavePrivada);
+                    System.out.println("3. Reto descifrado: " + retoDescifrado);
+                    outputLine = null;   // Responder que el reto es válido
+                    estado ++;          // Cambiar al siguiente estado
+                } catch (Exception e) {
+                    outputLine = "ERROR al descifrar el reto";
+                    estado = 0;          // Volver al inicio si hay un error
+                }
+                break;
+
+            case 2:
                 try {
                     int val = Integer.parseInt(inputLine);
                     val--;
@@ -45,7 +58,7 @@ public class ProtocoloServidor {
                 }
                 break;
 
-            case 2:
+            case 3:
                 if (inputLine.equalsIgnoreCase("OK")) {
                     outputLine = "ADIOS";
                     estado++;
