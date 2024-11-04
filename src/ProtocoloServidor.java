@@ -10,10 +10,12 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class ProtocoloServidor {
@@ -27,6 +29,8 @@ public class ProtocoloServidor {
     private static BigInteger gy;
     private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
     private static SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
+    private static byte[] iv; // almacena el IV
+
 
     private static final SecureRandom random = new SecureRandom();
     private static final String rutaCarpetaServidor = "src/DatosServidor";
@@ -40,7 +44,7 @@ public class ProtocoloServidor {
     cargarLlavePrivada();
     cargarLlavePublica();
 
-    while (estado < 4 && (inputLine = pIn.readLine()) != null) {
+    while (estado < 6 && (inputLine = pIn.readLine()) != null) {
         System.out.println("Entrada a procesar: " + inputLine);
         switch (estado) {
             case 0:
@@ -87,8 +91,19 @@ public class ProtocoloServidor {
                 gy= new BigInteger(inputLine);
                 estado = calcularLlavesSimetricas();
                 System.out.println("11b. Calcula (G^y)^x");
+                System.out.println("estado:"+estado);
+
+                IvParameterSpec ivSpec = generarIV();
+                enviarIV(pOut, ivSpec);
+                estado++;
+                System.out.println("Transición al estado 5 después de enviar IV");
+
                 break;
-            case 4:
+
+            case 4: 
+                break;
+
+            case 5:
                 if (inputLine.equalsIgnoreCase("TERMINAR")) {
                     outputLine = "ADIOS";
                     estado++;
@@ -240,6 +255,26 @@ public static void generarP_G() throws Exception {
             e.printStackTrace();
             return null;
         }
+    }
+
+
+    private static IvParameterSpec generarIV() {
+        byte[] iv = new byte[16]; // IV de 16 bytes
+        random.nextBytes(iv); // Genera un IV aleatorio
+        IvParameterSpec ivSpec = new IvParameterSpec(iv);
+        
+        // Codificar el IV en Base64 para enviarlo como texto
+        String ivBase64 = Base64.getEncoder().encodeToString(iv);
+        System.out.println("12. iv");
+        System.out.println("Vector generado : " + ivBase64);
+        
+        return ivSpec;
+    }
+
+    private static void enviarIV(PrintWriter pOut, IvParameterSpec ivSpec) {
+        String ivBase64 = Base64.getEncoder().encodeToString(ivSpec.getIV());
+        pOut.println(ivBase64); 
+        System.out.println("IV enviado al cliente: " + ivBase64);
     }
 
 }

@@ -17,6 +17,7 @@ import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class ProtocoloCliente {
@@ -30,14 +31,14 @@ public class ProtocoloCliente {
     private static SecureRandom random = new SecureRandom();
     private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado
     private static SecretKey llaveSimetrica_MAC;    // Llave para MAC
-    private static int ivVectorIni; // vector que manda el servidor
+    private static IvParameterSpec ivVectorIni; // vector que manda el servidor
             
     private static final String rutaLlavePublica = "llave_publica.ser";
     private static final String reto = generarRetoAleatorio(); 
             
     private static String retoCifrado;
             
-    public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut, int uid) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+    public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut, String uid) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
         cargarLlavePublica();
         
         int estado = 1;
@@ -51,17 +52,21 @@ public class ProtocoloCliente {
                 case 2 : 
                     estado = enviarReto(pOut, pIn);
                     break;
-                case 3: 
+                case 3 : 
                     estado = verificarFirmaServidor(pIn, pOut);
                     break;   
-                case 4: 
+                case 4 : 
                     estado=calcularLlavesSimetricas();
                     System.out.println("11a. Calcula (G^x)^y");
 
                     pOut.println(gy.toString());
                     System.out.println("11. Enviar G^y");
-                    break;         
+                    break;   
                 case 5 : 
+                    ivVectorIni = recibirIV(pIn);
+                    estado = enviarUidCifrado(pOut, ivVectorIni, uid); 
+                    break;          
+                case 6 : 
                     estado = manejarComando(stdIn, pIn, pOut);
                     break;
                 default : {
@@ -191,14 +196,13 @@ public class ProtocoloCliente {
 
     }
     
-    private static int enviarUidCifrado(PrintWriter pOut, int uid) {
+    private static int enviarUidCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String uid) {
         try {
-            String uidStr = String.valueOf(uid);
-            String uidCifrado = Seguridad.cifradoSimetrico(uidStr, llaveSimetrica_MAC, null);
+            String uidCifrado = Seguridad.cifradoSimetrico(uid, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("UID cifrado: " + uidCifrado);
             pOut.println(uidCifrado); // Enviar el UID cifrado al servidor
             System.out.println("13. Enviar C(K_AB1, uid)");
-            return 5;
+            return 6;
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el UID: " + e.getMessage());
             e.printStackTrace();
@@ -206,6 +210,11 @@ public class ProtocoloCliente {
       }
     }
 
+    private static IvParameterSpec recibirIV(BufferedReader pIn) throws IOException {
+        String ivBase64 = pIn.readLine(); // Recibe el IV 
+        byte[] iv = Base64.getDecoder().decode(ivBase64); // Decodifica el IV
+        return new IvParameterSpec(iv); // Crea el IvParameterSpec para usar en cifrado
+    }
 
     // Método para generar G^y
     private static void generarGy() {
