@@ -55,6 +55,7 @@ public class ProtocoloCliente {
                     break;   
                 case 4: 
                     estado=calcularLlavesSimetricas();
+                    System.out.println("11a. Calcula (G^x)^y");
 
                     pOut.println(gy.toString());
                     System.out.println("11. Enviar G^y");

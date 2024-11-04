@@ -5,11 +5,16 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 public class ProtocoloServidor {
 
@@ -19,6 +24,10 @@ public class ProtocoloServidor {
     private static BigInteger G;
     private static BigInteger Gx;
     private static BigInteger x;
+    private static BigInteger gy;
+    private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
+    private static SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
+
     private static final SecureRandom random = new SecureRandom();
     private static final String rutaCarpetaServidor = "src/DatosServidor";
     private static final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
@@ -74,8 +83,12 @@ public class ProtocoloServidor {
                 }
                 break;
             
-
             case 3:
+                gy= new BigInteger(inputLine);
+                estado = calcularLlavesSimetricas();
+                System.out.println("11b. Calcula (G^y)^x");
+                break;
+            case 4:
                 if (inputLine.equalsIgnoreCase("TERMINAR")) {
                     outputLine = "ADIOS";
                     estado++;
@@ -149,29 +162,58 @@ public static void generarP_G() throws Exception {
     Gx = G.modPow(x, P); // Calculamos G^x mod P
     }
 
-// Nuevo método para generar parámetros P, G y G^x, e imprimirlos
-private static int generarParametrosEImprimir() {
-    try {
-        // Genera los valores de P y G
-        generarP_G();
-        
-        // Calcula G^x
-        generarGx();
+    // Nuevo método para generar parámetros P, G y G^x, e imprimirlos
+    private static int generarParametrosEImprimir() {
+        try {
+            // Genera los valores de P y G
+            generarP_G();
+            
+            // Calcula G^x
+            generarGx();
 
-        System.out.println("7. Genera G, P, G^X");
-        
-        // Imprime los valores generados
-        System.out.println("Valor de P: " + P);
-        System.out.println("Valor de G: " + G);
-        System.out.println("Valor de G^x: " + Gx);
-        
-        return 3; // Avanza al siguiente estado
-    } catch (Exception e) {
-        System.err.println("Error al generar los parámetros P, G y G^x: " + e.getMessage());
-        e.printStackTrace();
-        return 0; // Reinicia el protocolo en caso de error
+            System.out.println("7. Genera G, P, G^X");
+            
+            // Imprime los valores generados
+            System.out.println("Valor de P: " + P);
+            System.out.println("Valor de G: " + G);
+            System.out.println("Valor de G^x: " + Gx);
+            
+            return 3; // Avanza al siguiente estado
+        } catch (Exception e) {
+            System.err.println("Error al generar los parámetros P, G y G^x: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia el protocolo en caso de error
+        }
     }
-}
+    // Método para calcular las llaves simétricas K_AB1 y K_AB2
+    private static int calcularLlavesSimetricas() {
+        try {
+            // Calcular la clave maestra (G^y)^x mod P
+            BigInteger claveMaestra = gy.modPow(x, P);
+            System.out.println("Clave maestra calculada (G^y)^x mod P: " + claveMaestra);
+
+            // Generar el digest SHA-512 de la clave maestra
+            MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
+            byte[] digest = sha512Digest.digest(claveMaestra.toByteArray());
+
+            // Dividir el digest en dos mitades para crear K_AB1 y K_AB2
+            byte[] llave_pa_cifrar = Arrays.copyOfRange(digest, 0, 32); // Primeros 256 bits para cifrado
+            byte[] llave_pa_MAC = Arrays.copyOfRange(digest, 32, 64);   // Últimos 256 bits para HMAC
+
+            // Crear llaves SecretKey para cifrado y MAC
+            llaveSimetrica_cifrar = new SecretKeySpec(llave_pa_cifrar, "AES");
+            llaveSimetrica_MAC = new SecretKeySpec(llave_pa_MAC, "AES");
+
+            System.out.println("Llave simétrica para cifrado (K_AB1): " + new BigInteger(1, llave_pa_cifrar).toString(16));
+            System.out.println("Llave simétrica para HMAC (K_AB2): " + new BigInteger(1, llave_pa_MAC).toString(16));
+
+            return 4; // Avanza al siguiente estado
+        } catch (Exception e) {
+            System.err.println("Error al calcular las llaves simétricas: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia el protocolo en caso de error
+        }
+    }
 
     //  cargar la llave pública desde el archivo
     public static void cargarLlavePublica() {
