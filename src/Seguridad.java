@@ -1,5 +1,6 @@
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -35,6 +36,19 @@ public class Seguridad {
      }
     }
 
+    public static String calcularFirma(String mensaje, PrivateKey llavePrivada){
+        try{
+            Signature firma = Signature.getInstance("SHA1withRSA");
+            firma.initSign(llavePrivada);
+            firma.update(mensaje.getBytes());
+            byte[] firmaBytes = firma.sign();
+            return Base64.getEncoder().encodeToString(firmaBytes);
+        } catch (Exception e) {
+            System.err.println("Error al calcular la firma: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 
     // Simetrico (AES)
