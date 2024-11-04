@@ -12,7 +12,7 @@ public class Servidor {
     System.out.println("Main Server ...");
 
     try {
-        ss = new ServerSocket(/* aquí va el número de puerto */);
+        ss = new ServerSocket(3400);
     } catch (IOException e) {
         System.err.println("No se pudo crear el socket en el puerto: " );
         System.exit(-1);
