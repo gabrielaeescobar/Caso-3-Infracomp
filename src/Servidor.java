@@ -1,12 +1,26 @@
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Scanner;
 
 public class Servidor {
+    private static final String ALGORITMO = "RSA";
+    private static final String rutaCarpetaServidor = "src/DatosServidor";
+    private static final String rutaLlavePublica = "llave_publica.ser";
+    private static final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
+    private static PublicKey llavePublica;
+    private static PrivateKey llavePrivada;
 
     public static void main(String args[]) throws IOException {
     boolean continuar0 = true;
+
     
     while (continuar0){
         Scanner scanner = new Scanner(System.in);
@@ -17,6 +31,7 @@ public class Servidor {
 
         int opcion = scanner.nextInt();
         if (opcion == 1) {
+            generarLLavesAsimetrica();
             System.out.println("Las llaves han sido generadas y almacenadas en archivos.");
 
         }
@@ -54,6 +69,40 @@ public class Servidor {
     }
 
 }
+
+    public static void generarLLavesAsimetrica(){
+        try {
+                KeyPairGenerator generator = KeyPairGenerator.getInstance(ALGORITMO);
+                generator.initialize(1024); // Inicializar el generador con 1024 bits
+
+                KeyPair keyPair = generator.generateKeyPair();
+                llavePublica = keyPair.getPublic();
+                llavePrivada = keyPair.getPrivate();
+
+                File carpeta = new File(rutaCarpetaServidor);
+                if (!carpeta.exists()) {
+                    carpeta.mkdir();
+                }
+
+                // guardar llaves en el archivo
+                guardarLlavesArchivo(rutaLlavePublica, llavePublica);
+                guardarLlavesArchivo(rutaLlavePrivada, llavePrivada);
+
+        } catch (Exception e) {
+            System.err.println("Error generando llaves asimétricas: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void guardarLlavesArchivo(String rutaArchivo, Object llave){
+    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(rutaArchivo))) {
+                oos.writeObject(llave);
+                System.out.println("Llave guardada en: " + rutaArchivo);
+            } catch (Exception e) {
+                System.err.println("Error al guardar la llave en archivo: " + e.getMessage());
+                e.printStackTrace();
+            }
+    }
 
 
 }
