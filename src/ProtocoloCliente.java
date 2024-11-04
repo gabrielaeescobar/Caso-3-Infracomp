@@ -71,8 +71,11 @@ public class ProtocoloCliente {
         // Espera respuesta del servidor
         String fromServer = pIn.readLine();
         if (fromServer != null) {
-            verificarRta(fromServer, pIn, pOut);
-            return 3; // Avanza al siguiente estado de comando
+            int estadoNuevo= verificarRta(fromServer, pIn, pOut);
+            if (estadoNuevo!= 3){
+                return estadoNuevo; // Avanza al siguiente estado de comando
+
+            }
         }
         
         System.out.println("Error: Respuesta inesperada del servidor.");
@@ -113,7 +116,7 @@ public class ProtocoloCliente {
             System.out.println("5. Verificación exitosa de Rta == Reto");
             pOut.println("OK"); // Enviar "OK" como confirmación
             System.out.println("6. Enviar OK");
-            return 4; // Avanza al siguiente estado para manejar comandos
+            return 3; // Avanza al siguiente estado para manejar comandos
         }
         
         System.out.println("Error: Rta no coincide con el Reto.");
