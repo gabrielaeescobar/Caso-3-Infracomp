@@ -73,7 +73,8 @@ public class ProtocoloServidor {
                     estado = 0; // Reinicia en caso de error
                 }
                 break;
-                
+            
+
             case 3:
                 if (inputLine.equalsIgnoreCase("TERMINAR")) {
                     outputLine = "ADIOS";
