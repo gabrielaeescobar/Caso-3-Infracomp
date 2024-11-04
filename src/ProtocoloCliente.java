@@ -30,13 +30,14 @@ public class ProtocoloCliente {
     private static SecureRandom random = new SecureRandom();
     private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado
     private static SecretKey llaveSimetrica_MAC;    // Llave para MAC
+    private static int ivVectorIni; // vector que manda el servidor
             
     private static final String rutaLlavePublica = "llave_publica.ser";
     private static final String reto = generarRetoAleatorio(); 
             
     private static String retoCifrado;
             
-    public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+    public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut, int uid) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
         cargarLlavePublica();
         
         int estado = 1;
@@ -189,6 +190,23 @@ public class ProtocoloCliente {
         }
 
     }
+    
+    private static int enviarUidCifrado(PrintWriter pOut, int uid) {
+        try {
+            String uidStr = String.valueOf(uid);
+            String uidCifrado = Seguridad.cifradoSimetrico(uidStr, llaveSimetrica_MAC, null);
+            System.out.println("UID cifrado: " + uidCifrado);
+            pOut.println(uidCifrado); // Enviar el UID cifrado al servidor
+            System.out.println("13. Enviar C(K_AB1, uid)");
+            return 5;
+        } catch (Exception e) {
+            System.err.println("Error al cifrar y enviar el UID: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia en caso de error        }
+      }
+    }
+
+
     // Método para generar G^y
     private static void generarGy() {
         if (p == null || g == null) {
@@ -234,8 +252,6 @@ public class ProtocoloCliente {
             return 0; // Reinicia el protocolo en caso de error
         }
     }
-
-
 
 
     private static void cargarLlavePublica() {
