@@ -4,12 +4,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 
 public class ProtocoloCliente {
 
     private static PublicKey llavePublica;
     private static final String rutaLlavePublica = "llave_publica.ser";
-    private static final String reto = "12345"; // Puedes usar un valor aleatorio si es necesario
+    private static final String reto = generarRetoAleatorio(); 
     private static String retoCifrado;
 
     public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
@@ -24,7 +25,10 @@ public class ProtocoloCliente {
                 break;
                 case 2 : estado = enviarReto(pOut, pIn);
                 break;
-                case 3 : estado = manejarComando(stdIn, pIn, pOut);
+                case 3: 
+                //estado = verificarRta(pIn,pOut);
+                break;
+                case 4 : estado = manejarComando(stdIn, pIn, pOut);
                 break;
                 default : {
                     System.out.println("Protocolo terminado o error.");
@@ -57,18 +61,18 @@ public class ProtocoloCliente {
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error al cifrar y enviar el reto.");
-            return 0; // Termina en caso de error
+            return 1; // Termina en caso de error
         }
         
         // Espera respuesta del servidor
         String fromServer = pIn.readLine();
-        if ("OK".equalsIgnoreCase(fromServer)) {
-            System.out.println("3. Reto validado por el servidor.");
+        if (fromServer != null) {
+            verificarRta(fromServer, pIn, pOut);
             return 3; // Avanza al siguiente estado de comando
         }
         
         System.out.println("Error: Respuesta inesperada del servidor.");
-        return 0;
+        return 2;
     }
 
     private static int manejarComando(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
@@ -82,7 +86,7 @@ public class ProtocoloCliente {
             // Si el usuario escribe "TERMINAR", termina el protocolo
             if (fromUser.equalsIgnoreCase("TERMINAR")) {
                 System.out.println("18. TERMINAR");
-                return 0;
+                return 3;
             }
             
             // Lee la respuesta del servidor
@@ -97,6 +101,21 @@ public class ProtocoloCliente {
         System.out.println("Entrada no válida.");
         return 3;
     }
+
+
+    private static int verificarRta(String fromServer,BufferedReader pIn, PrintWriter pOut) throws IOException {
+        
+        if (fromServer != null && fromServer.equals(reto)) { // Verifica si Rta == Reto
+            System.out.println("5. Verificación exitosa de Rta == Reto");
+            pOut.println("OK"); // Enviar "OK" como confirmación
+            System.out.println("6. Enviar OK");
+            return 4; // Avanza al siguiente estado para manejar comandos
+        }
+        
+        System.out.println("Error: Rta no coincide con el Reto.");
+        return 0; // Reinicia el protocolo si no coincide
+    }
+
 
     private static void cargarLlavePublica() {
         llavePublica = (PublicKey) cargarLlaveDesdeArchivo(rutaLlavePublica);
@@ -114,4 +133,12 @@ public class ProtocoloCliente {
             return null;
         }
     }
+
+     private static String generarRetoAleatorio() {
+        SecureRandom random = new SecureRandom();
+        int numeroAleatorio = random.nextInt(90000) + 10000;
+        return String.valueOf(numeroAleatorio);
+    }
+
+
 }

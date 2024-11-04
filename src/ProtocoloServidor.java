@@ -27,7 +27,7 @@ public class ProtocoloServidor {
             case 0:
                 //1.            
                 if (inputLine.equalsIgnoreCase("SECINIT")) {
-                    System.out.println("1.SECINIT");
+                   // System.out.println("1.SECINIT");
                     estado++;
                 }
                 outputLine = null;
@@ -36,9 +36,11 @@ public class ProtocoloServidor {
             case 1:
                 // Estado 1: Recibe el reto cifrado y lo descifra
                 try {
-                    String retoDescifrado = Seguridad.descifradoAsimetrico(inputLine, llavePrivada);
-                    System.out.println("3. Reto descifrado: " + retoDescifrado);
-                    outputLine = null;   // Responder que el reto es válido
+                    String rta = Seguridad.descifradoAsimetrico(inputLine, llavePrivada);
+                    System.out.println("3. Reto descifrado: " + rta);
+                    outputLine = rta;   // enviar rta
+                    System.out.println("4. Envio de reto descifrado: " + rta);
+
                     estado ++;          // Cambiar al siguiente estado
                 } catch (Exception e) {
                     outputLine = "ERROR al descifrar el reto";
