@@ -4,8 +4,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
+import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.util.Base64;
 
 public class ProtocoloCliente {
 
@@ -16,7 +22,7 @@ public class ProtocoloCliente {
 
     private static String retoCifrado;
 
-    public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
+    public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
         cargarLlavePublica();
         
         int estado = 1;
@@ -28,10 +34,8 @@ public class ProtocoloCliente {
                 break;
                 case 2 : estado = enviarReto(pOut, pIn);
                 break;
-                case 3:
-                //estado = generarParametrosEImprimir();
-            
-                break;
+                case 3: estado = verificarFirmaServidor(pIn, pOut);
+                break;            
                 case 4 : estado = manejarComando(stdIn, pIn, pOut);
                 break;
                 default : {
@@ -119,8 +123,44 @@ public class ProtocoloCliente {
             return 3; // Avanza al siguiente estado para manejar comandos
         }
         
-        System.out.println("Error: Rta no coincide con el Reto.");
+        System.out.println("6. Enviar ERROR");
         return 0; // Reinicia el protocolo si no coincide
+    }
+
+    private static int verificarFirmaServidor(BufferedReader pIn, PrintWriter pOut) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        try {
+            String fromServer = pIn.readLine();
+            if (fromServer == null) {
+                System.out.println("Error: No se recibió mensaje del servidor.");
+                return 0;
+            }        
+        String[] partes = fromServer.split(";");
+        BigInteger p = new BigInteger(partes[0]);
+        BigInteger g = new BigInteger(partes[1]);
+        BigInteger gx = new BigInteger(partes[2]);
+        String firmaBase64 = partes[3];
+        String mensaje = p.toString() + ";" + g.toString() + ";" + gx.toString();
+        byte[] mensajeBytes = mensaje.getBytes();
+        byte[] firmaBytes = Base64.getDecoder().decode(firmaBase64);
+        Signature signature = Signature.getInstance("SHA1withRSA");
+        signature.initVerify(llavePublica);
+        signature.update(mensajeBytes);
+        boolean verificacion = signature.verify(firmaBytes);
+
+        if (fromServer != null && verificacion) {
+            System.out.println("9. Verifica Firma");
+            System.out.println("10. Envia OK.");
+            return 4; // Proceder al siguiente estado
+        } else {
+            System.out.println("9. Verifica Firma");
+            System.out.println("10. Envia ERROR.");
+            return 0; // Reiniciar en caso de error
+        } }catch (Exception e) {
+            System.err.println("Error al verificar la firma: " + e.getMessage());
+            e.printStackTrace();
+            return 0;
+        }
+
     }
 
 

@@ -61,11 +61,11 @@ public class ProtocoloServidor {
             case 2:
                 try {
                     generarParametrosEImprimir(); // Generar P, G, y G^x
-                    String mensaje = P.toString()+", " + G.toString()+ ", "+Gx.toString();
+                    String mensaje = P.toString()+";" + G.toString()+ ";"+Gx.toString();
                     String firma = Seguridad.calcularFirma(mensaje, llavePrivada);
                     System.out.println("FIRMA: "+firma);
-                    outputLine = mensaje+", "+ firma;
-                    System.out.println("7. Enviando P, G, Gx y firma al cliente.");
+                    outputLine = mensaje+";"+ firma;
+                    System.out.println("8. Enviando P, G, Gx y firma al cliente.");
                     estado++;
                 } catch (Exception e) {
                     System.err.println("Error al generar los parámetros P, G y G^x: " + e.getMessage());
@@ -156,6 +156,8 @@ private static int generarParametrosEImprimir() {
         
         // Calcula G^x
         generarGx();
+
+        System.out.println("7. Genera G, P, G^X");
         
         // Imprime los valores generados
         System.out.println("Valor de P: " + P);
