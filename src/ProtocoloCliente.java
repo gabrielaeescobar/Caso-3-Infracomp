@@ -20,10 +20,13 @@ public class ProtocoloCliente {
         
         while (ejecutar) {
             switch (estado) {
-                case 1 -> estado = estadoInicial(stdIn, pIn, pOut);
-                case 2 -> estado = enviarReto(pOut, pIn);
-                case 3 -> estado = manejarComando(stdIn, pIn, pOut);
-                default -> {
+                case 1 : estado = estadoInicial(stdIn, pIn, pOut);
+                break;
+                case 2 : estado = enviarReto(pOut, pIn);
+                break;
+                case 3 : estado = manejarComando(stdIn, pIn, pOut);
+                break;
+                default : {
                     System.out.println("Protocolo terminado o error.");
                     ejecutar = false;
                 }
