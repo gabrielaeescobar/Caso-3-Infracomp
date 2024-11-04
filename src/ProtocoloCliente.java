@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.security.PublicKey;
@@ -9,8 +10,10 @@ import java.security.SecureRandom;
 public class ProtocoloCliente {
 
     private static PublicKey llavePublica;
+
     private static final String rutaLlavePublica = "llave_publica.ser";
     private static final String reto = generarRetoAleatorio(); 
+
     private static String retoCifrado;
 
     public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
@@ -25,8 +28,9 @@ public class ProtocoloCliente {
                 break;
                 case 2 : estado = enviarReto(pOut, pIn);
                 break;
-                case 3: 
-                //estado = verificarRta(pIn,pOut);
+                case 3:
+                //estado = generarParametrosEImprimir();
+            
                 break;
                 case 4 : estado = manejarComando(stdIn, pIn, pOut);
                 break;
@@ -134,7 +138,7 @@ public class ProtocoloCliente {
         }
     }
 
-     private static String generarRetoAleatorio() {
+    private static String generarRetoAleatorio() {
         SecureRandom random = new SecureRandom();
         int numeroAleatorio = random.nextInt(90000) + 10000;
         return String.valueOf(numeroAleatorio);
