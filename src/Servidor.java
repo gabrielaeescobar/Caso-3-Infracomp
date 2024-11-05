@@ -113,11 +113,12 @@ public class Servidor {
     }
 
     public static ArrayList<Paquete> tablaDePaquete(){
+        int[] estadosnum = {0, 1, 2, 3, 4, 5, 6};
         String[] estados = {"ENOFICINA", "RECOGIDO", "ENCLASIFICACION", "DESPACHADO", "ENENTREGA", "ENTREGADO", "DESCONOCIDO"};
         Random random = new Random();
         ArrayList<Paquete> paquetes = new ArrayList<>();
         for (int i = 0; i<32; i++){
-            paquetes.add(new Paquete("u_"+i, "pack_"+i, estados[random.nextInt(estados.length)]));
+            paquetes.add(new Paquete("pack_"+i, "u_"+i, estadosnum[random.nextInt(estados.length)]));
         }
         return paquetes;
     }

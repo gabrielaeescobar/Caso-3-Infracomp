@@ -1,8 +1,8 @@
 public class Paquete {
     private String id;
     private String uid;
-    private String estado;
-    public Paquete(String id, String uid, String estado) {
+    private int estado;
+    public Paquete(String id, String uid, int estado) {
         this.id = id;
         this.uid = uid;
         this.estado = estado;
@@ -19,10 +19,10 @@ public class Paquete {
     public void setUid(String uid) {
         this.uid = uid;
     }
-    public String getEstado() {
+    public int getEstado() {
         return estado;
     }
-    public void setEstado(String estado) {
+    public void setEstado(int estado) {
         this.estado = estado;
     }
 
