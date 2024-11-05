@@ -8,6 +8,8 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Servidor {
@@ -20,6 +22,11 @@ public class Servidor {
     private ProtocoloServidor protocoloServidor = new ProtocoloServidor();
 
     public static void main(String args[]) throws IOException {
+        ArrayList<Paquete> tabla = tablaDePaquete();
+        System.out.println(tabla.get(1).getId()+ tabla.get(1).getUid()+ tabla.get(1).getEstado());
+        System.out.println(tabla);
+        System.out.println(tabla.size());
+
     boolean continuar0 = true;
 
     
@@ -106,5 +113,14 @@ public class Servidor {
             }
     }
 
+    public static ArrayList<Paquete> tablaDePaquete(){
+        String[] estados = {"ENOFICINA", "RECOGIDO", "ENCLASIFICACION", "DESPACHADO", "ENENTREGA", "ENTREGADO", "DESCONOCIDO"};
+        Random random = new Random();
+        ArrayList<Paquete> paquetes = new ArrayList<>();
+        for (int i = 0; i<32; i++){
+            paquetes.add(new Paquete("u_"+i, "pack_"+i, estados[random.nextInt(estados.length)]));
+        }
+        return paquetes;
+    }
 
 }
