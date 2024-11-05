@@ -20,10 +20,11 @@ public class ProtocoloCliente {
     private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado
     private static SecretKey llaveSimetrica_MAC;    // Llave para MAC
     private static IvParameterSpec ivVectorIni; // vector que manda el servidor
-            
     private static final String rutaLlavePublica = "llave_publica.ser";
     private static final String reto = generarRetoAleatorio(); 
-            
+    private static String estadoDescifrado;
+    private static String hmacEstadoVerificado;
+
     private static String retoCifrado;
             
     public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut, String uid, String paqueteid) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
@@ -54,12 +55,22 @@ public class ProtocoloCliente {
                     ivVectorIni = recibirIV(pIn);
                     estado = enviarUidCifrado(pOut, ivVectorIni, uid); // Tambien se envia el HMAC del uid
                     break;                        
-                case 6 : 
+                 case 6 : 
                     estado = enviarPaqueteidCifrado(pOut, ivVectorIni, paqueteid); // Tambien se envia el HMAC del paqueteid
-                break;              
-                case 7 : 
-                    estado = manejarComando(stdIn, pIn, pOut);
-                    break;
+                     break;              
+                 case 7 : 
+                    try {
+                        String fromServer = pIn.readLine();
+                        System.out.println(fromServer+"////////////////////");
+                        estadoDescifrado = descrifradoSimetricoEstado(fromServer, llaveSimetrica_cifrar, ivVectorIni);
+                        System.out.println("17.a Descifrar estado");
+                        estado++;
+                    } catch (Exception e) {
+                        System.err.println("Error al verificar estado y paquete ID: " + e.getMessage());
+                        e.printStackTrace();
+                        estado = 0; // Reinicia en caso de error
+                    }
+                    break;              
                 default : {
                     System.out.println("Protocolo terminado o error.");
                     ejecutar = false;
@@ -222,8 +233,8 @@ public class ProtocoloCliente {
         try {
             String paqueteidCifrado = Seguridad.cifradoSimetrico(paqueteid, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("Paquete cifrado: " + paqueteidCifrado);
-            pOut.println(paqueteidCifrado); // Enviar el paqueteid cifrado al servidor
             System.out.println("14a. Enviar C(K_AB1, paqueteid)");
+            pOut.println(paqueteidCifrado); // Enviar el paqueteid cifrado al servidor
 
             return enviarHmacPaqueteid(pOut, paqueteid);
         
@@ -324,6 +335,30 @@ public class ProtocoloCliente {
         int numeroAleatorio = random.nextInt(90000) + 10000;
         return String.valueOf(numeroAleatorio);
     }
-
+    
+    public static String descrifradoSimetricoEstado(String estado, SecretKey llaveCifrado, IvParameterSpec iv) {
+        try {
+            String estadoDescifrado = Seguridad.descifradoSimetrico(estado, llaveCifrado, iv);
+            //boolean verificacionHMAC = verificarHMacUid(uidDescifrado, llaveSimetrica_MAC, uidDescifrado);
+            return estadoDescifrado;
+            
+        } catch (Exception e) {
+            System.err.println("Error al verificar el cifrado del estado: " + e.getMessage());
+            e.printStackTrace();
+            return "";
+        }
+    }
+    
+    public static boolean verificarHMacEstado(String hmacRecibido, SecretKey llaveSimetrica_MAC, String estadoEsperado) {
+        try {
+            String hmacCalculado = Seguridad.calcularHMAC(llaveSimetrica_MAC, estadoEsperado);
+            return hmacCalculado.equals(hmacRecibido);
+        } catch (Exception e) {
+            System.err.println("Error al verificar el HMAC del estado: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
 
 }

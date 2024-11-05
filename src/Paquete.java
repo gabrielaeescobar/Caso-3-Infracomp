@@ -30,7 +30,7 @@ public class Paquete {
     }
 
     public String busquedaEstado(String uId, String packId){
-        if (uid == uId && id == packId){
+        if (uid.equals(uId) && id.equals(packId)){
             return estados[this.estado];
         }
         else return "";

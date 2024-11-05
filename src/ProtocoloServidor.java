@@ -18,8 +18,14 @@ public class ProtocoloServidor {
     private static BigInteger gy;
     private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
     private static SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
-    private static byte[] iv; // almacena el IV
+    private static IvParameterSpec ivSpec; // almacena el IV
     private static String uid;
+    private static String uidDescifrado; // Declaración de uidDescifrado como variable de instancia
+    private static boolean hmac1Verificado;
+    private static boolean hmac2Verificado;
+    private static String packIdDescifrado;
+    private static String estadoPaquete="";
+
 
     private static final SecureRandom random = new SecureRandom();
     private static final String rutaCarpetaServidor = "src/DatosServidor";
@@ -34,7 +40,7 @@ public class ProtocoloServidor {
         cargarLlavePrivada();
         cargarLlavePublica();
 
-        while (estado < 6 && (inputLine = pIn.readLine()) != null) {
+        while (estado < 10 && (inputLine = pIn.readLine()) != null) {
             System.out.println("Entrada a procesar: " + inputLine);
             switch (estado) {
                 case 0:
@@ -89,16 +95,72 @@ public class ProtocoloServidor {
                     estado = calcularLlavesSimetricas();
                     System.out.println("11b. Calcula (G^y)^x");
 
-                    IvParameterSpec ivSpec = generarIV();
+                    ivSpec = generarIV();
                     enviarIV(pOut, ivSpec);
-                    estado++;
+                    //estado++;
+                    System.out.println("================================+ "+ estado);
 
                     break;
 
                 case 4: 
+                    // Paso 15: Verificar UID y paquete_id con sus respectivos HMAC en un solo paso
+                    try {
+                        uidDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
+                        System.out.println("15.a Descifrar uid");
+                        estado++;
+                    } catch (Exception e) {
+                        System.err.println("Error al verificar UID y paquete ID: " + e.getMessage());
+                        e.printStackTrace();
+                        estado = 0; // Reinicia en caso de error
+                    }
                     break;
 
                 case 5:
+                    hmac1Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, uidDescifrado);
+                    if (hmac1Verificado){
+                        estado++;
+                        System.out.println("15.b HMAC uid verificado");
+                    } else {
+                        estado = 0;
+                        System.out.println("Error en el procesamiento de HMAC de uid");
+                    }
+                    break;
+                case 6:
+                    packIdDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
+                    System.out.println("15.c Descifrar packid");
+                    estado++;
+
+                    break;
+                case 7:
+                    hmac2Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, packIdDescifrado);
+                    if (hmac2Verificado){
+                        estado++;
+                        System.out.println("15.d HMAC packid verificado");
+                        if (hmac1Verificado&&hmac2Verificado){
+                            ArrayList<String> estados = new ArrayList<>();
+                            for (Paquete pack : tabla){
+                                estados.add(pack.busquedaEstado(uidDescifrado, packIdDescifrado));
+
+                            }
+                            for (String estadoStr : estados){
+                                if (!estadoStr.equals("")) estadoPaquete = estadoStr;
+                            }
+                            if (estadoPaquete.equals("")) estadoPaquete = "DESCONOCIDO";
+                        }
+
+                    System.out.println("15.e Estado encontrado: " +estadoPaquete);
+                    estado = enviarEstadoCifrado(pOut, ivSpec, estadoPaquete); // Tambien se envia el HMAC del estado del paquete
+                    } else {
+                        estado = 0;
+                        System.out.println("Error en el procesamiento de HMAC de uid");
+                    }
+                    break;
+                case 8:
+                    System.out.println("//////////////////////////////////////////"+ estado);
+
+                    break;               
+
+                case 9:
                     if (inputLine.equalsIgnoreCase("TERMINAR")) {
                         outputLine = "ADIOS";
                         estado++;
@@ -266,16 +328,16 @@ public class ProtocoloServidor {
         System.out.println("12. IV enviado al cliente: " + ivBase64);
     }
 
-    public static boolean verificarHMacConCifradoUid(String uidCifrado, SecretKey llaveCifrado, IvParameterSpec iv) {
+    public static String descrifradoSimetricoId(String uidCifrado, SecretKey llaveCifrado, IvParameterSpec iv) {
         try {
             String uidDescifrado = Seguridad.descifradoSimetrico(uidCifrado, llaveCifrado, iv);
-            boolean verificacionHMAC = verificarHMacUid(uidDescifrado, llaveSimetrica_MAC, uidDescifrado);
-            return verificacionHMAC;
+            //boolean verificacionHMAC = verificarHMacUid(uidDescifrado, llaveSimetrica_MAC, uidDescifrado);
+            return uidDescifrado;
             
         } catch (Exception e) {
             System.err.println("Error al verificar el cifrado del UID: " + e.getMessage());
             e.printStackTrace();
-            return false;
+            return "";
         }
     }
     
@@ -290,5 +352,37 @@ public class ProtocoloServidor {
         }
     }
     
+
+    private static int enviarEstadoCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String estado) {
+        try {
+            String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
+            System.out.println("Estado cifrado: " + estadoCifrado);
+            pOut.println(estadoCifrado); // Enviar el UID cifrado al servidor
+            System.out.println("16a. Enviar C(K_AB1, estado)");
+
+            return enviarHmacEstado(pOut, estado);
+        
+        } catch (Exception e) {
+            System.err.println("Error al cifrar y enviar el estado: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia en caso de error        
+      }
+    }
+
+    public static int enviarHmacEstado(PrintWriter pOut, String estado){
+        try {
+            String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, estado);
+            System.out.println("HMAC del estado: " + hmac);
+            pOut.println(hmac);
+            System.out.println("16b. Enviar HMAC(K_AB2, estado)");
+            return 10;
+
+        } catch (Exception e) {
+            System.err.println("Error al calcular y enviar el HMAC del UID: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia en caso de error        
+      }
+    }
+
 
 }
