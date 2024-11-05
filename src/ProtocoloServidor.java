@@ -195,8 +195,16 @@ public class ProtocoloServidor {
     }
 
     public static void generarP_G() throws Exception {
-        String ruta_openssl = System.getProperty("user.dir") + "\\lib\\OpenSSL-1.1.1h_win32\\openssl.exe";
-        Process process = Runtime.getRuntime().exec(ruta_openssl + " dhparam -text 1024");
+        // String ruta_openssl = System.getProperty("user.dir") + "\\lib\\OpenSSL-1.1.1h_win32\\openssl.exe";
+        // Process process = Runtime.getRuntime().exec(ruta_openssl + " dhparam -text 1024");
+        // Process p = new ProcessBuilder().inheritIO().command("command1").start();
+
+        String executablePath = "lib\\OpenSSL-1.1.1h_win32\\openssl.exe"; // para jkvgjkbbkhl
+
+        String[] command = { executablePath, "dhparam", "-text", "1024" };
+        
+        // Process process = Runtime.getRuntime().exec(command);
+        Process process = new ProcessBuilder().command(command).redirectErrorStream(true).start();
 
         // Leer la salida del comando y acumularla en un StringBuilder
         StringBuilder output = new StringBuilder();
