@@ -205,7 +205,7 @@ public class ProtocoloCliente {
 
     public static int enviarHmacUid(PrintWriter pOut, String uid){
         try {
-            String hmac = Seguridad.calcularHMAC((SecretKeySpec) llaveSimetrica_MAC, uid);
+            String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, uid);
             System.out.println("HMAC del UID: " + hmac);
             pOut.println(hmac);
             System.out.println("13b. Enviar HMAC(K_AB2, uid)");
@@ -236,7 +236,7 @@ public class ProtocoloCliente {
 
     public static int enviarHmacPaqueteid(PrintWriter pOut, String paqueteid){
         try {
-            String hmac = Seguridad.calcularHMAC((SecretKeySpec) llaveSimetrica_MAC, paqueteid);
+            String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, paqueteid);
             System.out.println("HMAC del Paquete: " + hmac);
             pOut.println(hmac);
             System.out.println("14b. Enviar HMAC(K_AB2, paqueteid)");

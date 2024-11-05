@@ -19,7 +19,7 @@ public class ProtocoloServidor {
     private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
     private static SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
     private static byte[] iv; // almacena el IV
-
+    private static String uid;
 
     private static final SecureRandom random = new SecureRandom();
     private static final String rutaCarpetaServidor = "src/DatosServidor";
@@ -265,5 +265,30 @@ public class ProtocoloServidor {
         pOut.println(ivBase64); 
         System.out.println("12. IV enviado al cliente: " + ivBase64);
     }
+
+    public static boolean verificarHMacConCifradoUid(String uidCifrado, SecretKey llaveCifrado, IvParameterSpec iv) {
+        try {
+            String uidDescifrado = Seguridad.descifradoSimetrico(uidCifrado, llaveCifrado, iv);
+            boolean verificacionHMAC = verificarHMacUid(uidDescifrado, llaveSimetrica_MAC, uidDescifrado);
+            return verificacionHMAC;
+            
+        } catch (Exception e) {
+            System.err.println("Error al verificar el cifrado del UID: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean verificarHMacUid(String hmacRecibido, SecretKey llaveSimetrica_MAC, String uidEsperado) {
+        try {
+            String hmacCalculado = Seguridad.calcularHMAC(llaveSimetrica_MAC, uidEsperado);
+            return hmacCalculado.equals(hmacRecibido);
+        } catch (Exception e) {
+            System.err.println("Error al verificar el HMAC del UID: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
 
 }

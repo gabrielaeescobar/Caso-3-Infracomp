@@ -84,7 +84,7 @@ public class Seguridad {
     }
 
     //calcular Hmac
-    public static String calcularHMAC(SecretKeySpec llaveAutenticacion, String userId) {
+    public static String calcularHMAC(SecretKey llaveAutenticacion, String userId) {
         try {
             Mac mac = Mac.getInstance("HmacSHA384");
             mac.init(llaveAutenticacion);
