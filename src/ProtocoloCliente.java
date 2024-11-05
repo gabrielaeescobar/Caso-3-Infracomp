@@ -1,24 +1,12 @@
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.PrintWriter;
-import java.math.BigInteger;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.util.Arrays;
-import java.util.Base64;
+import java.io.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import java.math.BigInteger;
+import java.security.*;
+
+import java.util.*;
+
+import javax.crypto.*;
+import javax.crypto.spec.*;
 
 public class ProtocoloCliente {
 
@@ -202,9 +190,26 @@ public class ProtocoloCliente {
             System.out.println("UID cifrado: " + uidCifrado);
             pOut.println(uidCifrado); // Enviar el UID cifrado al servidor
             System.out.println("13a. Enviar C(K_AB1, uid)");
-            return 6;
+
+            return enviarHmacUid(pOut, uid);
+        
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el UID: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia en caso de error        }
+      }
+    }
+
+    public static int enviarHmacUid(PrintWriter pOut, String uid){
+        try {
+            String hmac = Seguridad.calcularHMAC((SecretKeySpec) llaveSimetrica_MAC, uid);
+            System.out.println("HMAC del UID: " + hmac);
+            pOut.println(hmac);
+            System.out.println("13b. Enviar HMAC(K_AB2, uid)");
+            return 6;
+
+        } catch (Exception e) {
+            System.err.println("Error al calcular y enviar el HMAC del UID: " + e.getMessage());
             e.printStackTrace();
             return 0; // Reinicia en caso de error        }
       }
