@@ -357,10 +357,12 @@ public class ProtocoloServidor {
         try {
             String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("Estado cifrado: " + estadoCifrado);
-            pOut.println(estadoCifrado); // Enviar el UID cifrado al servidor
-            System.out.println("16a. Enviar C(K_AB1, estado)");
+            String hmac = enviarHmacEstado(pOut, estadoCifrado);
+            String mensajeCompleto = estadoCifrado + ";" + hmac;
 
-            return enviarHmacEstado(pOut, estado);
+            pOut.println(mensajeCompleto); // Enviar el estado cifrado + hmac estado al servidor
+            System.out.println("16a. Enviar C(K_AB1, estado)");
+            return 10;
         
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el estado: " + e.getMessage());
@@ -369,18 +371,17 @@ public class ProtocoloServidor {
       }
     }
 
-    public static int enviarHmacEstado(PrintWriter pOut, String estado){
+    public static String enviarHmacEstado(PrintWriter pOut, String estado){
         try {
             String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, estado);
             System.out.println("HMAC del estado: " + hmac);
-            pOut.println(hmac);
             System.out.println("16b. Enviar HMAC(K_AB2, estado)");
-            return 10;
+            return hmac;
 
         } catch (Exception e) {
             System.err.println("Error al calcular y enviar el HMAC del UID: " + e.getMessage());
             e.printStackTrace();
-            return 0; // Reinicia en caso de error        
+            return ""; // Reinicia en caso de error        
       }
     }
 

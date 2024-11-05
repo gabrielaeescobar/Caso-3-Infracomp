@@ -59,18 +59,11 @@ public class ProtocoloCliente {
                     estado = enviarPaqueteidCifrado(pOut, ivVectorIni, paqueteid); // Tambien se envia el HMAC del paqueteid
                      break;              
                  case 7 : 
-                    try {
-                        String fromServer = pIn.readLine();
-                        System.out.println(fromServer+"////////////////////");
-                        estadoDescifrado = descrifradoSimetricoEstado(fromServer, llaveSimetrica_cifrar, ivVectorIni);
-                        System.out.println("17.a Descifrar estado");
-                        estado++;
-                    } catch (Exception e) {
-                        System.err.println("Error al verificar estado y paquete ID: " + e.getMessage());
-                        e.printStackTrace();
-                        estado = 0; // Reinicia en caso de error
-                    }
-                    break;              
+                    estado = verificarFinal(pIn,pOut);
+                    break;         
+                case 8: 
+                    estado = enviarTerminar(pOut);
+                    break;         
                 default : {
                     System.out.println("Protocolo terminado o error.");
                     ejecutar = false;
@@ -360,5 +353,46 @@ public class ProtocoloCliente {
         }
     }
     
+    public static int verificarFinal(BufferedReader pIn, PrintWriter pOut){
+        try {
 
+            String fromServer = pIn.readLine();
+            if (fromServer == null) {
+                System.out.println("Error: No se recibió mensaje del servidor.");
+                return 0;
+            }        
+            String[] partes = fromServer.split(";");
+            String cifradoEstado = partes[0];
+            String hmacEstado = partes[1];
+            estadoDescifrado = descrifradoSimetricoEstado(cifradoEstado, llaveSimetrica_cifrar, ivVectorIni);
+            System.out.println("17.a Descifrar estado");
+            boolean hmacVerificado = verificarHMacEstado(hmacEstado, llaveSimetrica_MAC, estadoDescifrado);
+            if (hmacVerificado)  {
+                System.out.println("17.b Estado verificado");
+                return 8;
+
+            } else {
+                System.out.println("No se pudo verificar");
+                return 0;
+
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error al verificar estado y paquete ID: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia en caso de error
+        }
+    }
+
+    private static int enviarTerminar(PrintWriter pOut) {
+        try {
+            pOut.println("TERMINAR");
+            System.out.println("18. Enviar TERMINAR");
+            return 9; // Estado que indica que la comunicación ha finalizado exitosamente
+        } catch (Exception e) {
+            System.err.println("Error al enviar el mensaje TERMINAR: " + e.getMessage());
+            e.printStackTrace();
+            return 0; // Reinicia en caso de error
+        }
+    }
 }
