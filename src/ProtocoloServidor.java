@@ -41,6 +41,8 @@ public class ProtocoloServidor {
         cargarLlavePublica();
 
         while (estado < 10 && (inputLine = pIn.readLine()) != null) {
+            outputLine = null; // Inicializar outputLine a null en cada iteración
+
             System.out.println("Entrada a procesar: " + inputLine);
             switch (estado) {
                 case 0:
@@ -89,20 +91,34 @@ public class ProtocoloServidor {
                         estado = 0; // Reinicia en caso de error
                     }
                     break;
-                
+
                 case 3:
+                    // Nuevo estado para manejar la respuesta del cliente
+                    if (inputLine.equalsIgnoreCase("OK")) {
+                        System.out.println("Cliente envió OK");
+                        estado++; // Proceder al siguiente estado para recibir G^y
+                    } else if (inputLine.equalsIgnoreCase("ERROR")) {
+                        System.out.println("Cliente envió ERROR");
+                        estado = 0; // Reiniciar protocolo
+                    } else {
+                        System.out.println("Mensaje no esperado del cliente: " + inputLine);
+                        estado = 0; // Reiniciar protocolo
+                    }
+                    break;
+
+                case 4:
                     gy= new BigInteger(inputLine);
-                    estado = calcularLlavesSimetricas();
+                     calcularLlavesSimetricas();
                     System.out.println("11b. Calcula (G^y)^x");
 
                     ivSpec = generarIV();
                     enviarIV(pOut, ivSpec);
-                    //estado++;
+                    estado++;
                     System.out.println("================================+ "+ estado);
 
                     break;
 
-                case 4: 
+                case 5: 
                     // Paso 15: Verificar UID y paquete_id con sus respectivos HMAC en un solo paso
                     try {
                         uidDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
@@ -115,7 +131,7 @@ public class ProtocoloServidor {
                     }
                     break;
 
-                case 5:
+                case 6:
                     hmac1Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, uidDescifrado);
                     if (hmac1Verificado){
                         estado++;
@@ -125,13 +141,13 @@ public class ProtocoloServidor {
                         System.out.println("Error en el procesamiento de HMAC de uid");
                     }
                     break;
-                case 6:
+                case 7:
                     packIdDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
                     System.out.println("15.c Descifrar packid");
                     estado++;
 
                     break;
-                case 7:
+                case 8:
                     hmac2Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, packIdDescifrado);
                     if (hmac2Verificado){
                         estado++;
@@ -154,16 +170,12 @@ public class ProtocoloServidor {
                         estado = 0;
                         System.out.println("Error en el procesamiento de HMAC de uid");
                     }
-                    break;
-                case 8:
-                    System.out.println("//////////////////////////////////////////"+ estado);
-
-                    break;               
+                    break;          
 
                 case 9:
                     if (inputLine.equalsIgnoreCase("TERMINAR")) {
-                        outputLine = "ADIOS";
-                        estado++;
+
+                        estado= 11;
                     } else {
                         outputLine = "ERROR. Esperaba TERMINAR";
                         estado = 0;
@@ -255,7 +267,7 @@ public class ProtocoloServidor {
         }
     }
     // Método para calcular las llaves simétricas K_AB1 y K_AB2
-    private static int calcularLlavesSimetricas() {
+    private static void calcularLlavesSimetricas() {
         try {
             // Calcular la clave maestra (G^y)^x mod P
             BigInteger claveMaestra = gy.modPow(x, P);
@@ -275,11 +287,9 @@ public class ProtocoloServidor {
             //System.out.println("Llave simétrica para cifrado (K_AB1): " + new BigInteger(1, llave_pa_cifrar).toString(16));
             //System.out.println("Llave simétrica para HMAC (K_AB2): " + new BigInteger(1, llave_pa_MAC).toString(16));
 
-            return 4; // Avanza al siguiente estado
         } catch (Exception e) {
             System.err.println("Error al calcular las llaves simétricas: " + e.getMessage());
             e.printStackTrace();
-            return 0; // Reinicia el protocolo en caso de error
         }
     }
 
@@ -357,12 +367,12 @@ public class ProtocoloServidor {
         try {
             String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("Estado cifrado: " + estadoCifrado);
-            String hmac = enviarHmacEstado(pOut, estadoCifrado);
+            System.out.println("16a. Enviar C(K_AB1, estado)");
+            String hmac = enviarHmacEstado(pOut, estado);
             String mensajeCompleto = estadoCifrado + ";" + hmac;
 
             pOut.println(mensajeCompleto); // Enviar el estado cifrado + hmac estado al servidor
-            System.out.println("16a. Enviar C(K_AB1, estado)");
-            return 10;
+            return 9;
         
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el estado: " + e.getMessage());

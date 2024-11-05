@@ -1,6 +1,7 @@
 import java.io.*;
 
 import java.math.BigInteger;
+import java.net.Socket;
 import java.security.*;
 
 import java.util.*;
@@ -62,7 +63,7 @@ public class ProtocoloCliente {
                     estado = verificarFinal(pIn,pOut);
                     break;         
                 case 8: 
-                    estado = enviarTerminar(pOut);
+                    estado = enviarTerminar(pOut, pIn);
                     break;         
                 default : {
                     System.out.println("Protocolo terminado o error.");
@@ -175,10 +176,12 @@ public class ProtocoloCliente {
 
             if (fromServer != null && verificacion) {
                 System.out.println("9. Verifica Firma");
+                pOut.println("OK"); // Enviar confirmación al servidor
                 System.out.println("10. Envia OK.");
                 return 4; // Proceder al siguiente estado
             } else {
                 System.out.println("9. Verifica Firma");
+                pOut.println("ERROR"); // Notificar al servidor del error
                 System.out.println("10. Envia ERROR.");
                 return 0; // Reiniciar en caso de error
             }
@@ -345,6 +348,9 @@ public class ProtocoloCliente {
     public static boolean verificarHMacEstado(String hmacRecibido, SecretKey llaveSimetrica_MAC, String estadoEsperado) {
         try {
             String hmacCalculado = Seguridad.calcularHMAC(llaveSimetrica_MAC, estadoEsperado);
+            System.out.println("HMAC CALCULADO"+hmacCalculado);
+            System.out.println("HMAC RECIBIDO"+hmacRecibido);
+
             return hmacCalculado.equals(hmacRecibido);
         } catch (Exception e) {
             System.err.println("Error al verificar el HMAC del estado: " + e.getMessage());
@@ -361,11 +367,16 @@ public class ProtocoloCliente {
                 System.out.println("Error: No se recibió mensaje del servidor.");
                 return 0;
             }        
+            System.out.println("Mensaje recibido del servidor en verificarFinal: " + fromServer);
             String[] partes = fromServer.split(";");
+            if (partes.length != 2) {
+                System.out.println("Error: Formato incorrecto del mensaje recibido.");
+                return 0;
+            }
             String cifradoEstado = partes[0];
             String hmacEstado = partes[1];
             estadoDescifrado = descrifradoSimetricoEstado(cifradoEstado, llaveSimetrica_cifrar, ivVectorIni);
-            System.out.println("17.a Descifrar estado");
+            System.out.println("17.a Descifrar estado"+estadoDescifrado);
             boolean hmacVerificado = verificarHMacEstado(hmacEstado, llaveSimetrica_MAC, estadoDescifrado);
             if (hmacVerificado)  {
                 System.out.println("17.b Estado verificado");
@@ -384,10 +395,11 @@ public class ProtocoloCliente {
         }
     }
 
-    private static int enviarTerminar(PrintWriter pOut) {
+    private static int enviarTerminar(PrintWriter pOut, BufferedReader pIn)  {
         try {
             pOut.println("TERMINAR");
             System.out.println("18. Enviar TERMINAR");
+
             return 9; // Estado que indica que la comunicación ha finalizado exitosamente
         } catch (Exception e) {
             System.err.println("Error al enviar el mensaje TERMINAR: " + e.getMessage());
