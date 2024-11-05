@@ -30,7 +30,7 @@ public class Cliente {
             lector = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
 
-            ProtocoloCliente.procesar(teclado, lector, escritor,uid);
+            ProtocoloCliente.procesar(teclado, lector, escritor,uid,paqueteid);
 
         } catch (Exception e) {
             e.printStackTrace();
