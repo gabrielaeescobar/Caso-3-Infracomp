@@ -1,22 +1,11 @@
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.PrintWriter;
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import javax.crypto.spec.*;
+import java.util.regex.*;
+import java.security.*;
+import java.util.*;
+import javax.crypto.*;
+import java.io.*;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 public class ProtocoloServidor {
 
@@ -37,113 +26,114 @@ public class ProtocoloServidor {
     private static final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
     private static final String rutaLlavePublica = "llave_publica.ser";
 
-    public static void procesar(BufferedReader pIn, PrintWriter pOut) throws IOException {
-    String inputLine;
-    String outputLine = null;
-    int estado = 0;
-    cargarLlavePrivada();
-    cargarLlavePublica();
+    public static void procesar(BufferedReader pIn, PrintWriter pOut, ArrayList<Paquete> tabla) throws IOException {
 
-    while (estado < 6 && (inputLine = pIn.readLine()) != null) {
-        System.out.println("Entrada a procesar: " + inputLine);
-        switch (estado) {
-            case 0:
-                //1.            
-                if (inputLine.equalsIgnoreCase("SECINIT")) {
-                   // System.out.println("1.SECINIT");
+        String inputLine;
+        String outputLine = null;
+        int estado = 0;
+        cargarLlavePrivada();
+        cargarLlavePublica();
+
+        while (estado < 6 && (inputLine = pIn.readLine()) != null) {
+            System.out.println("Entrada a procesar: " + inputLine);
+            switch (estado) {
+                case 0:
+                    //1.            
+                    if (inputLine.equalsIgnoreCase("SECINIT")) {
+                    // System.out.println("1.SECINIT");
+                        estado++;
+                    }
+                    outputLine = null;
+                    break;
+
+                case 1:
+                    // Estado 1: Recibe el reto cifrado y lo descifra
+                    try {
+                        String rta = Seguridad.descifradoAsimetrico(inputLine, llavePrivada);
+                        System.out.println("3. Reto descifrado: " + rta);
+                        outputLine = rta;   // enviar rta
+                        System.out.println("4. Envio de reto descifrado: " + rta);
+
+                        estado ++;          // Cambiar al siguiente estado
+                    } catch (Exception e) {
+                        outputLine = "ERROR al descifrar el reto";
+                        estado = 0;          // Volver al inicio si hay un error
+                    }
+                    break;
+
+                case 2:
+                    try {
+                        generarParametrosEImprimir(); // Generar P, G, y G^x
+                        String mensaje = P.toString()+";" + G.toString()+ ";"+Gx.toString();
+                        String firma = Seguridad.calcularFirma(mensaje, llavePrivada);
+                        System.out.println("FIRMA: "+firma);
+                        outputLine = mensaje+";"+ firma;
+                        System.out.println("8. Enviando P, G, Gx y firma al cliente.");
+                        estado++;
+                    } catch (Exception e) {
+                        System.err.println("Error al generar los parámetros P, G y G^x: " + e.getMessage());
+                        e.printStackTrace();
+                        estado = 0; // Reinicia en caso de error
+                    }
+                    break;
+                
+                case 3:
+                    gy= new BigInteger(inputLine);
+                    estado = calcularLlavesSimetricas();
+                    System.out.println("11b. Calcula (G^y)^x");
+                    System.out.println("estado:"+estado);
+
+                    IvParameterSpec ivSpec = generarIV();
+                    enviarIV(pOut, ivSpec);
                     estado++;
-                }
-                outputLine = null;
-                break;
+                //S System.out.println("Transición al estado 5 después de enviar IV");
 
-            case 1:
-                // Estado 1: Recibe el reto cifrado y lo descifra
-                try {
-                    String rta = Seguridad.descifradoAsimetrico(inputLine, llavePrivada);
-                    System.out.println("3. Reto descifrado: " + rta);
-                    outputLine = rta;   // enviar rta
-                    System.out.println("4. Envio de reto descifrado: " + rta);
+                    break;
 
-                    estado ++;          // Cambiar al siguiente estado
-                } catch (Exception e) {
-                    outputLine = "ERROR al descifrar el reto";
-                    estado = 0;          // Volver al inicio si hay un error
-                }
-                break;
+                case 4: 
+                    break;
 
-            case 2:
-                try {
-                    generarParametrosEImprimir(); // Generar P, G, y G^x
-                    String mensaje = P.toString()+";" + G.toString()+ ";"+Gx.toString();
-                    String firma = Seguridad.calcularFirma(mensaje, llavePrivada);
-                    System.out.println("FIRMA: "+firma);
-                    outputLine = mensaje+";"+ firma;
-                    System.out.println("8. Enviando P, G, Gx y firma al cliente.");
-                    estado++;
-                } catch (Exception e) {
-                    System.err.println("Error al generar los parámetros P, G y G^x: " + e.getMessage());
-                    e.printStackTrace();
-                    estado = 0; // Reinicia en caso de error
-                }
-                break;
-            
-            case 3:
-                gy= new BigInteger(inputLine);
-                estado = calcularLlavesSimetricas();
-                System.out.println("11b. Calcula (G^y)^x");
-                System.out.println("estado:"+estado);
+                case 5:
+                    if (inputLine.equalsIgnoreCase("TERMINAR")) {
+                        outputLine = "ADIOS";
+                        estado++;
+                    } else {
+                        outputLine = "ERROR. Esperaba TERMINAR";
+                        estado = 0;
+                    }
+                    break;
 
-                IvParameterSpec ivSpec = generarIV();
-                enviarIV(pOut, ivSpec);
-                estado++;
-               //S System.out.println("Transición al estado 5 después de enviar IV");
-
-                break;
-
-            case 4: 
-                break;
-
-            case 5:
-                if (inputLine.equalsIgnoreCase("TERMINAR")) {
-                    outputLine = "ADIOS";
-                    estado++;
-                } else {
-                    outputLine = "ERROR. Esperaba TERMINAR";
+                default:
+                    outputLine = "ERROR";
                     estado = 0;
-                }
-                break;
+            }
 
-            default:
-                outputLine = "ERROR";
-                estado = 0;
+            if (outputLine != null) {
+                pOut.println(outputLine);
+            }
+            
+        }
+    }
+
+    public static void generarP_G() throws Exception {
+        String ruta_openssl = System.getProperty("user.dir") + "\\lib\\OpenSSL-1.1.1h_win32\\openssl.exe";
+        Process process = Runtime.getRuntime().exec(ruta_openssl + " dhparam -text 1024");
+
+        // Leer la salida del comando y acumularla en un StringBuilder
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            reader.lines().forEach(line -> output.append(line).append("\n"));
         }
 
-        if (outputLine != null) {
-            pOut.println(outputLine);
+        // Espera a que el proceso termine
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new RuntimeException("Error al ejecutar OpenSSL. Código de salida: " + exitCode);
         }
-        
+
+        // Procesar el contenido de `output` para extraer P y G
+        extraerP_G(output.toString());
     }
-}
-
-public static void generarP_G() throws Exception {
-    String ruta_openssl = System.getProperty("user.dir") + "\\lib\\OpenSSL-1.1.1h_win32\\openssl.exe";
-    Process process = Runtime.getRuntime().exec(ruta_openssl + " dhparam -text 1024");
-
-    // Leer la salida del comando y acumularla en un StringBuilder
-    StringBuilder output = new StringBuilder();
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-        reader.lines().forEach(line -> output.append(line).append("\n"));
-    }
-
-    // Espera a que el proceso termine
-    int exitCode = process.waitFor();
-    if (exitCode != 0) {
-        throw new RuntimeException("Error al ejecutar OpenSSL. Código de salida: " + exitCode);
-    }
-
-    // Procesar el contenido de `output` para extraer P y G
-    extraerP_G(output.toString());
-}
 
 
     private static void extraerP_G(String output) {
@@ -166,15 +156,16 @@ public static void generarP_G() throws Exception {
             throw new RuntimeException("No se pudo encontrar el valor de P o G en la salida de OpenSSL.");
         }
     }
+
    // Método para generar G^x
     private static void generarGx() {
-    if (P == null || G == null) {
-        throw new IllegalStateException("Los valores de P y G deben ser inicializados antes de llamar a generarGx.");
-    }
+        if (P == null || G == null) {
+            throw new IllegalStateException("Los valores de P y G deben ser inicializados antes de llamar a generarGx.");
+        }
 
-    // Generar un valor secreto x aleatorio en el rango [1, P-1] y calcular G^x mod P
-    x = new BigInteger(1024, random).mod(P.subtract(BigInteger.ONE)).add(BigInteger.ONE); // Guardamos el valor de x
-    Gx = G.modPow(x, P); // Calculamos G^x mod P
+        // Generar un valor secreto x aleatorio en el rango [1, P-1] y calcular G^x mod P
+        x = new BigInteger(1024, random).mod(P.subtract(BigInteger.ONE)).add(BigInteger.ONE); // Guardamos el valor de x
+        Gx = G.modPow(x, P); // Calculamos G^x mod P
     }
 
     // Nuevo método para generar parámetros P, G y G^x, e imprimirlos

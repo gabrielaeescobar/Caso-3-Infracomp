@@ -19,14 +19,12 @@ public class Servidor {
     private static final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
     private static PublicKey llavePublica;
     private static PrivateKey llavePrivada;
+    private static ArrayList<Paquete> tabla= tablaDePaquete();
 
+    
     public static void main(String args[]) throws IOException {
-        ArrayList<Paquete> tabla = tablaDePaquete();
-        System.out.println(tabla.get(1).getId()+ tabla.get(1).getUid()+ tabla.get(1).getEstado());
-        System.out.println(tabla);
-        System.out.println(tabla.size());
-
-    boolean continuar0 = true;
+        
+        boolean continuar0 = true;
 
     
     while (continuar0){
@@ -64,7 +62,7 @@ public class Servidor {
                 Socket socket = ss.accept();
         
                 // crear el thread con el socket y el id
-                ThreadServidor thread = new ThreadServidor(socket, threadId++);
+                ThreadServidor thread = new ThreadServidor(socket, threadId++, tabla);
                 // aquí debe hacer una modificación porque todos los threads tienen un identificador diferente
         
                 // start
@@ -122,5 +120,6 @@ public class Servidor {
         }
         return paquetes;
     }
+    
 
 }

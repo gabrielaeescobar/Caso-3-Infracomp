@@ -2,6 +2,9 @@ public class Paquete {
     private String id;
     private String uid;
     private int estado;
+    int[] estadosnum = {0, 1, 2, 3, 4, 5, 6};
+    String[] estados = {"ENOFICINA", "RECOGIDO", "ENCLASIFICACION", "DESPACHADO", "ENENTREGA", "ENTREGADO", "DESCONOCIDO"};
+
     public Paquete(String id, String uid, int estado) {
         this.id = id;
         this.uid = uid;
@@ -25,6 +28,19 @@ public class Paquete {
     public void setEstado(int estado) {
         this.estado = estado;
     }
+
+    public String busquedaEstado(String uId, String packId){
+        if (uid == uId && id == packId){
+            return estados[this.estado];
+        }
+        else return "";
+    }
+
+    public String getEstadoReal(int estadoNum){
+        return estados[estadoNum];
+    }
+
+
 
     
 

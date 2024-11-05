@@ -3,14 +3,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ThreadServidor extends Thread {
     private Socket sktCliente = null;
     private int id;
+    private ArrayList<Paquete> tabla;
 
-    public ThreadServidor(Socket pSocket, int pId) {
+    public ThreadServidor(Socket pSocket, int pId, ArrayList<Paquete> pTabla) {
         this.sktCliente = pSocket;
         this.id = pId;
+        this.tabla = pTabla;
     }
 
     public void run() {
@@ -20,7 +23,7 @@ public class ThreadServidor extends Thread {
             PrintWriter escritor = new PrintWriter(sktCliente.getOutputStream(), true);
             BufferedReader lector = new BufferedReader(new InputStreamReader(sktCliente.getInputStream()));
 
-            ProtocoloServidor.procesar(lector, escritor);
+            ProtocoloServidor.procesar(lector, escritor, tabla);
 
             escritor.close();
             lector.close();
