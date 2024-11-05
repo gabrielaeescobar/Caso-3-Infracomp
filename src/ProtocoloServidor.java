@@ -40,7 +40,6 @@ public class ProtocoloServidor {
                 case 0:
                     //1.            
                     if (inputLine.equalsIgnoreCase("SECINIT")) {
-                    // System.out.println("1.SECINIT");
                         estado++;
                     }
                     outputLine = null;
@@ -63,10 +62,18 @@ public class ProtocoloServidor {
 
                 case 2:
                     try {
+
+                        long inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
                         generarParametrosEImprimir(); // Generar P, G, y G^x
+                        long finTiempo = System.currentTimeMillis(); // Fin del cronómetro
+                        long tiempoEjecucion = finTiempo - inicioTiempo;
+                        System.out.println("### Tiempo de generación de P, G y G^x: " + tiempoEjecucion + " ms");
+
+
                         String mensaje = P.toString()+";" + G.toString()+ ";"+Gx.toString();
+
+
                         String firma = Seguridad.calcularFirma(mensaje, llavePrivada);
-                        System.out.println("FIRMA: "+firma);
                         outputLine = mensaje+";"+ firma;
                         System.out.println("8. Enviando P, G, Gx y firma al cliente.");
                         estado++;
@@ -81,12 +88,10 @@ public class ProtocoloServidor {
                     gy= new BigInteger(inputLine);
                     estado = calcularLlavesSimetricas();
                     System.out.println("11b. Calcula (G^y)^x");
-                    System.out.println("estado:"+estado);
 
                     IvParameterSpec ivSpec = generarIV();
                     enviarIV(pOut, ivSpec);
                     estado++;
-                //S System.out.println("Transición al estado 5 después de enviar IV");
 
                     break;
 
@@ -179,10 +184,6 @@ public class ProtocoloServidor {
 
             System.out.println("7. Genera G, P, G^X");
             
-            // Imprime los valores generados
-            System.out.println("Valor de P: " + P);
-            System.out.println("Valor de G: " + G);
-            System.out.println("Valor de G^x: " + Gx);
             
             return 3; // Avanza al siguiente estado
         } catch (Exception e) {
@@ -196,7 +197,6 @@ public class ProtocoloServidor {
         try {
             // Calcular la clave maestra (G^y)^x mod P
             BigInteger claveMaestra = gy.modPow(x, P);
-            System.out.println("Clave maestra calculada (G^y)^x mod P: " + claveMaestra);
 
             // Generar el digest SHA-512 de la clave maestra
             MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
@@ -210,8 +210,8 @@ public class ProtocoloServidor {
             llaveSimetrica_cifrar = new SecretKeySpec(llave_pa_cifrar, "AES");
             llaveSimetrica_MAC = new SecretKeySpec(llave_pa_MAC, "AES");
 
-            System.out.println("Llave simétrica para cifrado (K_AB1): " + new BigInteger(1, llave_pa_cifrar).toString(16));
-            System.out.println("Llave simétrica para HMAC (K_AB2): " + new BigInteger(1, llave_pa_MAC).toString(16));
+            //System.out.println("Llave simétrica para cifrado (K_AB1): " + new BigInteger(1, llave_pa_cifrar).toString(16));
+            //System.out.println("Llave simétrica para HMAC (K_AB2): " + new BigInteger(1, llave_pa_MAC).toString(16));
 
             return 4; // Avanza al siguiente estado
         } catch (Exception e) {
@@ -256,8 +256,6 @@ public class ProtocoloServidor {
         
         // Codificar el IV en Base64 para enviarlo como texto
         String ivBase64 = Base64.getEncoder().encodeToString(iv);
-        System.out.println("12. iv");
-        System.out.println("Vector generado : " + ivBase64);
         
         return ivSpec;
     }
@@ -265,7 +263,7 @@ public class ProtocoloServidor {
     private static void enviarIV(PrintWriter pOut, IvParameterSpec ivSpec) {
         String ivBase64 = Base64.getEncoder().encodeToString(ivSpec.getIV());
         pOut.println(ivBase64); 
-        System.out.println("IV enviado al cliente: " + ivBase64);
+        System.out.println("12. IV enviado al cliente: " + ivBase64);
     }
 
 }
