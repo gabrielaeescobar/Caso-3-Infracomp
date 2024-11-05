@@ -40,7 +40,9 @@ public class ProtocoloServidor {
         cargarLlavePrivada();
         cargarLlavePublica();
 
-        while (estado < 11 && (inputLine = pIn.readLine()) != null) {
+        while (estado < 10 && (inputLine = pIn.readLine()) != null) {
+            outputLine = null; // Inicializar outputLine a null en cada iteración
+
             System.out.println("Entrada a procesar: " + inputLine);
             switch (estado) {
                 case 0:
@@ -89,20 +91,34 @@ public class ProtocoloServidor {
                         estado = 0; // Reinicia en caso de error
                     }
                     break;
-                
+
                 case 3:
+                    // Nuevo estado para manejar la respuesta del cliente
+                    if (inputLine.equalsIgnoreCase("OK")) {
+                        System.out.println("Cliente envió OK");
+                        estado++; // Proceder al siguiente estado para recibir G^y
+                    } else if (inputLine.equalsIgnoreCase("ERROR")) {
+                        System.out.println("Cliente envió ERROR");
+                        estado = 0; // Reiniciar protocolo
+                    } else {
+                        System.out.println("Mensaje no esperado del cliente: " + inputLine);
+                        estado = 0; // Reiniciar protocolo
+                    }
+                    break;
+
+                case 4:
                     gy= new BigInteger(inputLine);
-                    estado = calcularLlavesSimetricas();
+                     calcularLlavesSimetricas();
                     System.out.println("11b. Calcula (G^y)^x");
 
                     ivSpec = generarIV();
                     enviarIV(pOut, ivSpec);
-                    //estado++;
+                    estado++;
                     System.out.println("================================+ "+ estado);
 
                     break;
 
-                case 4: 
+                case 5: 
                     // Paso 15: Verificar UID y paquete_id con sus respectivos HMAC en un solo paso
                     try {
                         uidDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
@@ -115,7 +131,7 @@ public class ProtocoloServidor {
                     }
                     break;
 
-                case 5:
+                case 6:
                     hmac1Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, uidDescifrado);
                     if (hmac1Verificado){
                         estado++;
@@ -125,13 +141,13 @@ public class ProtocoloServidor {
                         System.out.println("Error en el procesamiento de HMAC de uid");
                     }
                     break;
-                case 6:
+                case 7:
                     packIdDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
                     System.out.println("15.c Descifrar packid");
                     estado++;
 
                     break;
-                case 7:
+                case 8:
                     hmac2Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, packIdDescifrado);
                     if (hmac2Verificado){
                         estado++;
@@ -149,23 +165,17 @@ public class ProtocoloServidor {
                         }
 
                     System.out.println("15.e Estado encontrado: " +estadoPaquete);
-                    String cifradoYHmacEstado = enviarEstadoCifrado(ivSpec, estadoPaquete); // Tambien se envia el HMAC del estado del paquete
-                    outputLine = cifradoYHmacEstado;
-                    System.out.println("Mandado e=a outputline: "+ outputLine);
+                    estado = enviarEstadoCifrado(pOut, ivSpec, estadoPaquete); // Tambien se envia el HMAC del estado del paquete
                     } else {
                         estado = 0;
                         System.out.println("Error en el procesamiento de HMAC de uid");
                     }
-                    break;
-                case 8:
-                    System.out.println("//////////////////////////////////////////"+ estado);
-
-                    break;               
+                    break;          
 
                 case 9:
                     if (inputLine.equalsIgnoreCase("TERMINAR")) {
-                        outputLine = "ADIOS";
-                        estado++;
+
+                        estado= 11;
                     } else {
                         outputLine = "ERROR. Esperaba TERMINAR";
                         estado = 0;
@@ -200,26 +210,26 @@ public class ProtocoloServidor {
             throw new RuntimeException("Error al ejecutar OpenSSL. Código de salida: " + exitCode);
         }
 
-        // Procesar el contenido de `output` para extraer P y G
+        // Procesar el contenido de output para extraer P y G
         extraerP_G(output.toString());
     }
 
 
     private static void extraerP_G(String output) {
-        // Expresión regular para extraer el valor de `prime`
+        // Expresión regular para extraer el valor de prime
         Pattern primePattern = Pattern.compile("prime:\\s+([0-9a-fA-F:\\s]+)");
-        // Expresión regular para extraer el valor de `generator`
+        // Expresión regular para extraer el valor de generator
         Pattern generatorPattern = Pattern.compile("generator:\\s+(\\d+)");
     
         Matcher primeMatcher = primePattern.matcher(output);
         Matcher generatorMatcher = generatorPattern.matcher(output);
     
         if (primeMatcher.find() && generatorMatcher.find()) {
-            // Obtener el valor hexadecimal de `prime` y quitar los `:` y espacios
+            // Obtener el valor hexadecimal de prime y quitar los : y espacios
             String primeHex = primeMatcher.group(1).replaceAll("[:\\s]", "");
             P = new BigInteger(primeHex, 16); // Convertir de hexadecimal a decimal
     
-            // Obtener el valor de `generator` como decimal
+            // Obtener el valor de generator como decimal
             G = new BigInteger(generatorMatcher.group(1));
         } else {
             throw new RuntimeException("No se pudo encontrar el valor de P o G en la salida de OpenSSL.");
@@ -257,7 +267,7 @@ public class ProtocoloServidor {
         }
     }
     // Método para calcular las llaves simétricas K_AB1 y K_AB2
-    private static int calcularLlavesSimetricas() {
+    private static void calcularLlavesSimetricas() {
         try {
             // Calcular la clave maestra (G^y)^x mod P
             BigInteger claveMaestra = gy.modPow(x, P);
@@ -277,11 +287,9 @@ public class ProtocoloServidor {
             //System.out.println("Llave simétrica para cifrado (K_AB1): " + new BigInteger(1, llave_pa_cifrar).toString(16));
             //System.out.println("Llave simétrica para HMAC (K_AB2): " + new BigInteger(1, llave_pa_MAC).toString(16));
 
-            return 4; // Avanza al siguiente estado
         } catch (Exception e) {
             System.err.println("Error al calcular las llaves simétricas: " + e.getMessage());
             e.printStackTrace();
-            return 0; // Reinicia el protocolo en caso de error
         }
     }
 
@@ -355,26 +363,25 @@ public class ProtocoloServidor {
     }
     
 
-    private static String enviarEstadoCifrado(IvParameterSpec ivVectorIni, String estado) {
+    private static int enviarEstadoCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String estado) {
         try {
             String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("Estado cifrado: " + estadoCifrado);
-            String hmac = enviarHmacEstado(estadoCifrado);
+            System.out.println("16a. Enviar C(K_AB1, estado)");
+            String hmac = enviarHmacEstado(pOut, estado);
             String mensajeCompleto = estadoCifrado + ";" + hmac;
 
-            System.out.println(mensajeCompleto);
-
-            System.out.println("16a. Enviar C(K_AB1, estado)");
-            return mensajeCompleto;
+            pOut.println(mensajeCompleto); // Enviar el estado cifrado + hmac estado al servidor
+            return 9;
         
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el estado: " + e.getMessage());
             e.printStackTrace();
-            return ""; // Reinicia en caso de error        
+            return 0; // Reinicia en caso de error        
       }
     }
 
-    public static String enviarHmacEstado(String estado){
+    public static String enviarHmacEstado(PrintWriter pOut, String estado){
         try {
             String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, estado);
             System.out.println("HMAC del estado: " + hmac);
