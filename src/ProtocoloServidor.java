@@ -40,7 +40,7 @@ public class ProtocoloServidor {
         cargarLlavePrivada();
         cargarLlavePublica();
 
-        while (estado < 10 && (inputLine = pIn.readLine()) != null) {
+        while (estado < 11 && (inputLine = pIn.readLine()) != null) {
             System.out.println("Entrada a procesar: " + inputLine);
             switch (estado) {
                 case 0:
@@ -149,7 +149,9 @@ public class ProtocoloServidor {
                         }
 
                     System.out.println("15.e Estado encontrado: " +estadoPaquete);
-                    estado = enviarEstadoCifrado(pOut, ivSpec, estadoPaquete); // Tambien se envia el HMAC del estado del paquete
+                    String cifradoYHmacEstado = enviarEstadoCifrado(ivSpec, estadoPaquete); // Tambien se envia el HMAC del estado del paquete
+                    outputLine = cifradoYHmacEstado;
+                    System.out.println("Mandado e=a outputline: "+ outputLine);
                     } else {
                         estado = 0;
                         System.out.println("Error en el procesamiento de HMAC de uid");
@@ -353,25 +355,26 @@ public class ProtocoloServidor {
     }
     
 
-    private static int enviarEstadoCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String estado) {
+    private static String enviarEstadoCifrado(IvParameterSpec ivVectorIni, String estado) {
         try {
             String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("Estado cifrado: " + estadoCifrado);
-            String hmac = enviarHmacEstado(pOut, estadoCifrado);
+            String hmac = enviarHmacEstado(estadoCifrado);
             String mensajeCompleto = estadoCifrado + ";" + hmac;
 
-            pOut.println(mensajeCompleto); // Enviar el estado cifrado + hmac estado al servidor
+            System.out.println(mensajeCompleto);
+
             System.out.println("16a. Enviar C(K_AB1, estado)");
-            return 10;
+            return mensajeCompleto;
         
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el estado: " + e.getMessage());
             e.printStackTrace();
-            return 0; // Reinicia en caso de error        
+            return ""; // Reinicia en caso de error        
       }
     }
 
-    public static String enviarHmacEstado(PrintWriter pOut, String estado){
+    public static String enviarHmacEstado(String estado){
         try {
             String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, estado);
             System.out.println("HMAC del estado: " + hmac);

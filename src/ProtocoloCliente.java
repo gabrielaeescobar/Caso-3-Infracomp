@@ -53,6 +53,7 @@ public class ProtocoloCliente {
                     break;   
                 case 5 : 
                     ivVectorIni = recibirIV(pIn);
+                    System.out.println("////////////prueba //////////" + pIn);
                     estado = enviarUidCifrado(pOut, ivVectorIni, uid); // Tambien se envia el HMAC del uid
                     break;                        
                  case 6 : 
@@ -329,9 +330,9 @@ public class ProtocoloCliente {
         return String.valueOf(numeroAleatorio);
     }
     
-    public static String descrifradoSimetricoEstado(String estado, SecretKey llaveCifrado, IvParameterSpec iv) {
+    public static String descrifradoSimetricoEstado(String estado, SecretKey llaveCifrado, IvParameterSpec ivParameterSpec) {
         try {
-            String estadoDescifrado = Seguridad.descifradoSimetrico(estado, llaveCifrado, iv);
+            String estadoDescifrado = Seguridad.descifradoSimetrico(estado, llaveCifrado, ivVectorIni);
             //boolean verificacionHMAC = verificarHMacUid(uidDescifrado, llaveSimetrica_MAC, uidDescifrado);
             return estadoDescifrado;
             
@@ -356,14 +357,16 @@ public class ProtocoloCliente {
     public static int verificarFinal(BufferedReader pIn, PrintWriter pOut){
         try {
 
-            String fromServer = pIn.readLine();
-            if (fromServer == null) {
+            String fromServer2 = pIn.readLine();
+            if (fromServer2 == null) {
                 System.out.println("Error: No se recibió mensaje del servidor.");
                 return 0;
             }        
-            String[] partes = fromServer.split(";");
+            String[] partes = fromServer2.split(";");
             String cifradoEstado = partes[0];
             String hmacEstado = partes[1];
+      
+
             estadoDescifrado = descrifradoSimetricoEstado(cifradoEstado, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("17.a Descifrar estado");
             boolean hmacVerificado = verificarHMacEstado(hmacEstado, llaveSimetrica_MAC, estadoDescifrado);
