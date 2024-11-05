@@ -96,7 +96,7 @@ public class ProtocoloServidor {
                 IvParameterSpec ivSpec = generarIV();
                 enviarIV(pOut, ivSpec);
                 estado++;
-                System.out.println("Transición al estado 5 después de enviar IV");
+               //S System.out.println("Transición al estado 5 después de enviar IV");
 
                 break;
 

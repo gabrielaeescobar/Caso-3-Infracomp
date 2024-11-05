@@ -19,7 +19,6 @@ public class Servidor {
     private static final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
     private static PublicKey llavePublica;
     private static PrivateKey llavePrivada;
-    private ProtocoloServidor protocoloServidor = new ProtocoloServidor();
 
     public static void main(String args[]) throws IOException {
         ArrayList<Paquete> tabla = tablaDePaquete();
