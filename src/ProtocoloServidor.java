@@ -25,7 +25,7 @@ public class ProtocoloServidor {
     private static boolean hmac2Verificado;
     private static String packIdDescifrado;
     private static String estadoPaquete="";
-
+    private static long tiempoEjecucion1, tiempoEjecucion2, tiempoEjecucion3, tiempoEjecucionTot; 
 
     private static final SecureRandom random = new SecureRandom();
     private static final String rutaCarpetaServidor = "src/DatosServidor";
@@ -121,9 +121,13 @@ public class ProtocoloServidor {
                 case 5: 
                     // Paso 15: Verificar UID y paquete_id con sus respectivos HMAC en un solo paso
                     try {
+                        long inicioTiempo1 = System.currentTimeMillis(); // Inicio del cronómetro
                         uidDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
                         System.out.println("15.a Descifrar uid");
                         estado++;
+                        long finTiempo1 = System.currentTimeMillis(); // Fin del cronómetro
+                        tiempoEjecucion1 = finTiempo1 - inicioTiempo1;
+
                     } catch (Exception e) {
                         System.err.println("Error al verificar UID y paquete ID: " + e.getMessage());
                         e.printStackTrace();
@@ -132,26 +136,42 @@ public class ProtocoloServidor {
                     break;
 
                 case 6:
+                    long inicioTiempo2 = System.currentTimeMillis(); // Inicio del cronómetro
+
                     hmac1Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, uidDescifrado);
                     if (hmac1Verificado){
                         estado++;
                         System.out.println("15.b HMAC uid verificado");
+                        long finTiempo2 = System.currentTimeMillis(); // Fin del cronómetro
+                        tiempoEjecucion2 = finTiempo2 - inicioTiempo2;
+
+
                     } else {
                         estado = 0;
                         System.out.println("Error en el procesamiento de HMAC de uid");
                     }
                     break;
                 case 7:
+                    long inicioTiempo3 = System.currentTimeMillis(); // Inicio del cronómetro
+
                     packIdDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
                     System.out.println("15.c Descifrar packid");
                     estado++;
-
+                    long finTiempo3 = System.currentTimeMillis(); // Fin del cronómetro
+                    tiempoEjecucion3 = finTiempo3 - inicioTiempo3;
                     break;
+
                 case 8:
+                    long inicioTiempo4 = System.currentTimeMillis(); // Inicio del cronómetro
+
                     hmac2Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, packIdDescifrado);
                     if (hmac2Verificado){
                         estado++;
                         System.out.println("15.d HMAC packid verificado");
+                        long finTiempo4 = System.currentTimeMillis(); // Fin del cronómetro
+                        tiempoEjecucionTot = (finTiempo4 - inicioTiempo4)+tiempoEjecucion1+tiempoEjecucion2+tiempoEjecucion3;
+                        System.out.println("### Tiempo en ejecutar el paso 15: " + tiempoEjecucion1 + " ms");;
+    
                         if (hmac1Verificado&&hmac2Verificado){
                             ArrayList<String> estados = new ArrayList<>();
                             for (Paquete pack : tabla){
