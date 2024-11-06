@@ -9,8 +9,9 @@ public class Cliente {
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Seleccione una opción:");
-        System.out.println("1: Ejecutar clientes concurrentes");
+        System.out.println("1: Ejecutar clientes concurrentes (4, 8, 32) ");
         System.out.println("2: Ejecutar clientes uno por uno");
+        System.out.println("3: Ejecutar cliente iterativo con 32 consultas");
 
         int opcion = scanner.nextInt();
         scanner.nextLine(); // Consumir el salto de línea
@@ -28,14 +29,18 @@ public class Cliente {
 
         } else if (opcion == 2) {
             ejecutarClientesIterativos(scanner);
-        } else {
+        } else if (opcion ==3){
+            ejecutarClienteIterativo32Consultas();
+        }
+        
+        else {
             System.out.println("Opción no válida.");
         }
 
         scanner.close();
     }  
     
-    // ejecutar 32 clientes concurrentes
+    // ejecutar 4,8,32 clientes concurrentes
     public static void ejecutarClientesConcurrentes(int numeroClientes) {
         List<ClienteThread> clientes = new ArrayList<>();
 
@@ -98,6 +103,42 @@ public class Cliente {
         socket.close();
         escritor.close();
         lector.close();
+    }
+
+    public static void ejecutarClienteIterativo32Consultas() {
+        BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
+
+        try {
+            // Solicitar al usuario que ingrese su UID y paqueteid
+            System.out.print("Por favor, ingrese su id: ");
+            String uid = teclado.readLine();
+
+            System.out.print("Por favor, ingrese el id del paquete cuyo estado quiere buscar: ");
+            String paqueteid = teclado.readLine();
+
+            System.out.println("Comienza cliente iterativo con 32 consultas");
+
+            try (
+                Socket socket = new Socket(SERVIDOR, PUERTO);
+                PrintWriter escritor = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader lector = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            ) {
+                ProtocoloCliente protocoloCliente = new ProtocoloCliente();
+
+                // Envia 32 consultas al servidor
+                for (int i = 1; i <= 32; i++) {
+                    protocoloCliente.procesar(teclado, lector, escritor, uid, paqueteid);
+                    System.out.println("CONSULTA " + i + " DEL CLIENTE COMPLETADA.");
+                }
+
+                System.out.println("Todas las consultas han sido enviadas.");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            System.err.println("Error al leer la entrada del usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
         
 }
