@@ -71,13 +71,9 @@ public class ProtocoloCliente {
 
     private int enviarReto(PrintWriter pOut, BufferedReader pIn) throws IOException {
         try {
-            long inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
             retoCifrado = Seguridad.cifradoAsimetrico(reto, llavePublica);
-            long finTiempo = System.currentTimeMillis(); // Fin del cronómetro
-            long tiempoEjecucion = finTiempo - inicioTiempo;
-            System.out.println("2a. Cifrar reto");
 
-            System.out.println("### Tiempo en cifrar el reto: " + tiempoEjecucion + " ms");
+            System.out.println("2a. Cifrar reto");
 
 
             pOut.println(retoCifrado); // Paso 2b: enviar el reto cifrado

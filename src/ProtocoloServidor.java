@@ -50,7 +50,15 @@ public class ProtocoloServidor {
                 case 1:
                     // Estado 1: Recibe el reto cifrado y lo descifra
                     try {
+                        double inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
+
                         String rta = Seguridad.descifradoAsimetrico(inputLine, llavePrivada);
+
+                        double finTiempo = System.currentTimeMillis(); // Fin del cronómetro
+                        double tiempoEjecucion = finTiempo - inicioTiempo;
+                        System.out.println("### Tiempo de descifrado: " + tiempoEjecucion + " ms");
+
+
                         System.out.println("3. Reto descifrado: " + rta);
                         outputLine = rta;   // enviar rta
                         System.out.println("4. Envio de reto descifrado: " + rta);
