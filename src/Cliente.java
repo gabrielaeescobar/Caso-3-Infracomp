@@ -9,14 +9,23 @@ public class Cliente {
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Seleccione una opción:");
-        System.out.println("1: Ejecutar 32 clientes concurrentes");
+        System.out.println("1: Ejecutar clientes concurrentes");
         System.out.println("2: Ejecutar clientes uno por uno");
 
         int opcion = scanner.nextInt();
         scanner.nextLine(); // Consumir el salto de línea
 
         if (opcion == 1) {
-            ejecutarClientesConcurrentes(32);
+            System.out.println("Ingrese el número de clientes concurrentes (4, 8, 32):");
+            int numeroClientes = scanner.nextInt();
+            scanner.nextLine(); 
+            
+            if (numeroClientes == 4 || numeroClientes == 8 || numeroClientes == 32) {
+                ejecutarClientesConcurrentes(numeroClientes);
+            } else {
+                System.out.println("Número de clientes no válido. Debe ser 4, 8 o 32.");
+            }
+
         } else if (opcion == 2) {
             ejecutarClientesIterativos(scanner);
         } else {
