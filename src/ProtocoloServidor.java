@@ -218,26 +218,26 @@ public class ProtocoloServidor {
             throw new RuntimeException("Error al ejecutar OpenSSL. Código de salida: " + exitCode);
         }
 
-        // Procesar el contenido de `output` para extraer P y G
+        // Procesar el contenido de output para extraer P y G
         extraerP_G(output.toString());
     }
 
 
     private static void extraerP_G(String output) {
-        // Expresión regular para extraer el valor de `prime`
+        // Expresión regular para extraer el valor de prime
         Pattern primePattern = Pattern.compile("prime:\\s+([0-9a-fA-F:\\s]+)");
-        // Expresión regular para extraer el valor de `generator`
+        // Expresión regular para extraer el valor de generator
         Pattern generatorPattern = Pattern.compile("generator:\\s+(\\d+)");
     
         Matcher primeMatcher = primePattern.matcher(output);
         Matcher generatorMatcher = generatorPattern.matcher(output);
     
         if (primeMatcher.find() && generatorMatcher.find()) {
-            // Obtener el valor hexadecimal de `prime` y quitar los `:` y espacios
+            // Obtener el valor hexadecimal de prime y quitar los : y espacios
             String primeHex = primeMatcher.group(1).replaceAll("[:\\s]", "");
             P = new BigInteger(primeHex, 16); // Convertir de hexadecimal a decimal
     
-            // Obtener el valor de `generator` como decimal
+            // Obtener el valor de generator como decimal
             G = new BigInteger(generatorMatcher.group(1));
         } else {
             throw new RuntimeException("No se pudo encontrar el valor de P o G en la salida de OpenSSL.");
