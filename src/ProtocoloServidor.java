@@ -170,7 +170,11 @@ public class ProtocoloServidor {
                         System.out.println("15.d HMAC packid verificado");
                         long finTiempo4 = System.currentTimeMillis(); // Fin del cronómetro
                         tiempoEjecucionTot = (finTiempo4 - inicioTiempo4)+tiempoEjecucion1+tiempoEjecucion2+tiempoEjecucion3;
-                        System.out.println("### Tiempo en ejecutar el paso 15: " + tiempoEjecucion1 + " ms");;
+                        System.out.println("### tiempo 1: "+ tiempoEjecucion1);
+                        System.out.println("### tiempo 2: "+ tiempoEjecucion2);
+                        System.out.println("### tiempo 3: "+ tiempoEjecucion3);
+
+                        System.out.println("### Tiempo en ejecutar el paso 15: " + tiempoEjecucionTot + " ms");;
     
                         if (hmac1Verificado&&hmac2Verificado){
                             ArrayList<String> estados = new ArrayList<>();
@@ -393,9 +397,20 @@ public class ProtocoloServidor {
 
     private static int enviarEstadoCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String estado) {
         try {
+            long inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
             String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
+            long finTiempo = System.currentTimeMillis(); // Fin del cronómetro
+            long tiempoEjecucion = finTiempo - inicioTiempo;
             System.out.println("Estado cifrado: " + estadoCifrado);
             System.out.println("16a. Enviar C(K_AB1, estado)");
+            System.out.println("### Tiempo en cifrar el estado (SIMETRICO): " + tiempoEjecucion + " ms");
+
+            long inicioTiempoAsim = System.currentTimeMillis(); // Inicio del cronómetro
+            String estadoCifradoAsim = Seguridad.cifradoAsimetrico(estadoCifrado, llavePublica);
+            long finTiempoAsim = System.currentTimeMillis(); // Fin del cronómetro
+            long tiempoEjecucionAsim = finTiempoAsim - inicioTiempoAsim;
+            System.out.println("### Tiempo en cifrar el estado (ASIMETRICO): " + tiempoEjecucionAsim + " ms");
+
             String hmac = enviarHmacEstado(pOut, estado);
             String mensajeCompleto = estadoCifrado + ";" + hmac;
 

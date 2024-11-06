@@ -74,17 +74,19 @@ public class ProtocoloCliente {
     }
 
     private static int estadoInicial(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
-        System.out.println("Escriba el mensaje para enviar: ");
-        String fromUser = stdIn.readLine();
+        // System.out.println("Escriba el mensaje para enviar: ");
+        // String fromUser = stdIn.readLine();
+
+        System.out.println("1. Enviando SECINIT...");
+        pOut.println("SECINIT");
+        return 2; // Avanza al estado de enviar reto
         
-        if (fromUser.equalsIgnoreCase("SECINIT")) {
-            System.out.println("1. Enviando SECINIT...");
-            pOut.println("SECINIT");
-            return 2; // Avanza al estado de enviar reto
-        }
+        // if (fromUser.equalsIgnoreCase("SECINIT")) {
+            
+        // }
         
-        System.out.println("Entrada no válida. Intente nuevamente.");
-        return 1;
+        // System.out.println("Entrada no válida. Intente nuevamente.");
+        // return 1;
     }
 
     private static int enviarReto(PrintWriter pOut, BufferedReader pIn) throws IOException {
