@@ -9,30 +9,24 @@ import java.io.*;
 
 public class ProtocoloServidor {
 
-    private   PublicKey llavePublica;
-    private   PrivateKey llavePrivada;
-    private   BigInteger P;
-    private   BigInteger G;
-    private   BigInteger Gx;
-    private   BigInteger x;
-    private   BigInteger gy;
-    private   SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
-    private   SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
-    private   IvParameterSpec ivSpec; // almacena el IV
-    private   String uid;
-    private   String uidDescifrado; // Declaración de uidDescifrado como variable de instancia
-    private   boolean hmac1Verificado;
-    private   boolean hmac2Verificado;
-    private   String packIdDescifrado;
-    private   String estadoPaquete="";
-    private   long tiempoEjecucion1, tiempoEjecucion2, tiempoEjecucion3, tiempoEjecucionTot; 
+    private PublicKey llavePublica;
+    private PrivateKey llavePrivada;
+    private BigInteger P,G,Gx,x,gy;
+    private SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
+    private SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
+    private IvParameterSpec ivSpec; // almacena el IV
+    private String uid,uidDescifrado; 
+    private boolean hmac1Verificado,hmac2Verificado;
+    private String packIdDescifrado;
+    private String estadoPaquete="";
+    private long tiempoEjecucion1, tiempoEjecucion2, tiempoEjecucion3, tiempoEjecucionTot; 
 
-    private   final SecureRandom random = new SecureRandom();
-    private   final String rutaCarpetaServidor = "src/DatosServidor";
-    private   final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
-    private   final String rutaLlavePublica = "llave_publica.ser";
+    private final SecureRandom random = new SecureRandom();
+    private final String rutaCarpetaServidor = "src/DatosServidor";
+    private final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
+    private final String rutaLlavePublica = "llave_publica.ser";
 
-    public   void procesar(BufferedReader pIn, PrintWriter pOut, ArrayList<Paquete> tabla) throws IOException {
+    public void procesar(BufferedReader pIn, PrintWriter pOut, ArrayList<Paquete> tabla) throws IOException {
 
         String inputLine;
         String outputLine = null;
@@ -93,16 +87,15 @@ public class ProtocoloServidor {
                     break;
 
                 case 3:
-                    // Nuevo estado para manejar la respuesta del cliente
                     if (inputLine.equalsIgnoreCase("OK")) {
                         System.out.println("Cliente envió OK");
-                        estado++; // Proceder al siguiente estado para recibir G^y
+                        estado++; // va al siguiente estado para recibir G^y
                     } else if (inputLine.equalsIgnoreCase("ERROR")) {
                         System.out.println("Cliente envió ERROR");
-                        estado = 0; // Reiniciar protocolo
+                        estado = 0; 
                     } else {
                         System.out.println("Mensaje no esperado del cliente: " + inputLine);
-                        estado = 0; // Reiniciar protocolo
+                        estado = 0; 
                     }
                     break;
 
@@ -114,7 +107,6 @@ public class ProtocoloServidor {
                     ivSpec = generarIV();
                     enviarIV(pOut, ivSpec);
                     estado++;
-                    System.out.println("================================+ "+ estado);
 
                     break;
 
@@ -131,7 +123,7 @@ public class ProtocoloServidor {
                     } catch (Exception e) {
                         System.err.println("Error al verificar UID y paquete ID: " + e.getMessage());
                         e.printStackTrace();
-                        estado = 0; // Reinicia en caso de error
+                        estado = 0;
                     }
                     break;
 
@@ -170,9 +162,9 @@ public class ProtocoloServidor {
                         System.out.println("15.d HMAC packid verificado");
                         long finTiempo4 = System.currentTimeMillis(); // Fin del cronómetro
                         tiempoEjecucionTot = (finTiempo4 - inicioTiempo4)+tiempoEjecucion1+tiempoEjecucion2+tiempoEjecucion3;
-                        System.out.println("### tiempo 1: "+ tiempoEjecucion1);
-                        System.out.println("### tiempo 2: "+ tiempoEjecucion2);
-                        System.out.println("### tiempo 3: "+ tiempoEjecucion3);
+                        // System.out.println("### tiempo 1: "+ tiempoEjecucion1);
+                        // System.out.println("### tiempo 2: "+ tiempoEjecucion2);
+                        // System.out.println("### tiempo 3: "+ tiempoEjecucion3);
 
                         System.out.println("### Tiempo en ejecutar el paso 15: " + tiempoEjecucionTot + " ms");;
     
@@ -219,100 +211,96 @@ public class ProtocoloServidor {
     }
 
     public   void generarP_G() throws Exception {
-        // String ruta_openssl = System.getProperty("user.dir") + "\\lib\\OpenSSL-1.1.1h_win32\\openssl.exe";
-        // Process process = Runtime.getRuntime().exec(ruta_openssl + " dhparam -text 1024");
-        // Process p = new ProcessBuilder().inheritIO().command("command1").start();
 
         String executablePath = "lib\\OpenSSL-1.1.1h_win32\\openssl.exe"; // para jkvgjkbbkhl
 
         String[] command = { executablePath, "dhparam", "-text", "1024" };
         
-        // Process process = Runtime.getRuntime().exec(command);
         Process process = new ProcessBuilder().command(command).redirectErrorStream(true).start();
 
-        // Leer la salida del comando y acumularla en un StringBuilder
+        // lee la salida del comando y acumularla en un StringBuilder
         StringBuilder output = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             reader.lines().forEach(line -> output.append(line).append("\n"));
         }
 
-        // Espera a que el proceso termine
+        // espera a que el proceso termine
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             throw new RuntimeException("Error al ejecutar OpenSSL. Código de salida: " + exitCode);
         }
 
-        // Procesar el contenido de output para extraer P y G
+        // procesa el contenido de output para extraer P y G
         extraerP_G(output.toString());
     }
 
 
     private   void extraerP_G(String output) {
-        // Expresión regular para extraer el valor de prime
+        // exp regular para extraer el valor de prime
         Pattern primePattern = Pattern.compile("prime:\\s+([0-9a-fA-F:\\s]+)");
-        // Expresión regular para extraer el valor de generator
+        // exp regular para extraer el valor de generator
         Pattern generatorPattern = Pattern.compile("generator:\\s+(\\d+)");
     
         Matcher primeMatcher = primePattern.matcher(output);
         Matcher generatorMatcher = generatorPattern.matcher(output);
     
         if (primeMatcher.find() && generatorMatcher.find()) {
-            // Obtener el valor hexadecimal de prime y quitar los : y espacios
+            // el valor hexadecimal de prime y quitar los : y espacios
             String primeHex = primeMatcher.group(1).replaceAll("[:\\s]", "");
             P = new BigInteger(primeHex, 16); // Convertir de hexadecimal a decimal
     
-            // Obtener el valor de generator como decimal
+            // el valor de generator como decimal
             G = new BigInteger(generatorMatcher.group(1));
         } else {
             throw new RuntimeException("No se pudo encontrar el valor de P o G en la salida de OpenSSL.");
         }
     }
 
-   // Método para generar G^x
+   // para generar G^x
     private   void generarGx() {
         if (P == null || G == null) {
             throw new IllegalStateException("Los valores de P y G deben ser inicializados antes de llamar a generarGx.");
         }
 
-        // Generar un valor secreto x aleatorio en el rango [1, P-1] y calcular G^x mod P
+        // hace un valor secreto x aleatorio en el rango [1, P-1] y calcula G^x mod P
         x = new BigInteger(1024, random).mod(P.subtract(BigInteger.ONE)).add(BigInteger.ONE); // Guardamos el valor de x
         Gx = G.modPow(x, P); // Calculamos G^x mod P
     }
 
-    // Nuevo método para generar parámetros P, G y G^x, e imprimirlos
+    // genera parámetros P, G y G^x y los imprime
     private   int generarParametrosEImprimir() {
         try {
-            // Genera los valores de P y G
+            // los valores de P y G
             generarP_G();
             
-            // Calcula G^x
+            // calcula G^x
             generarGx();
 
             System.out.println("7. Genera G, P, G^X");
             
             
-            return 3; // Avanza al siguiente estado
+            return 3; 
         } catch (Exception e) {
             System.err.println("Error al generar los parámetros P, G y G^x: " + e.getMessage());
             e.printStackTrace();
-            return 0; // Reinicia el protocolo en caso de error
+            return 0;
         }
     }
-    // Método para calcular las llaves simétricas K_AB1 y K_AB2
+    // para calcular las llaves simétricas K_AB1 y K_AB2
     private   void calcularLlavesSimetricas() {
         try {
-            // Calcular la clave maestra (G^y)^x mod P
+            //clave maestra (G^y)^x mod P
             BigInteger claveMaestra = gy.modPow(x, P);
 
-            // Generar el digest SHA-512 de la clave maestra
+            // digest SHA-512 de la clave maestra
             MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
             byte[] digest = sha512Digest.digest(claveMaestra.toByteArray());
 
-            // Dividir el digest en dos mitades para crear K_AB1 y K_AB2
+            // divide el digest en dos mitades para crear K_AB1 y K_AB2
             byte[] llave_pa_cifrar = Arrays.copyOfRange(digest, 0, 32); // Primeros 256 bits para cifrado
             byte[] llave_pa_MAC = Arrays.copyOfRange(digest, 32, 64);   // Últimos 256 bits para HMAC
 
-            // Crear llaves SecretKey para cifrado y MAC
+            // crea llaves SecretKey para cifrado y MAC
             llaveSimetrica_cifrar = new SecretKeySpec(llave_pa_cifrar, "AES");
             llaveSimetrica_MAC = new SecretKeySpec(llave_pa_MAC, "AES");
 
@@ -358,7 +346,7 @@ public class ProtocoloServidor {
         random.nextBytes(iv); // Genera un IV aleatorio
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
         
-        // Codificar el IV en Base64 para enviarlo como texto
+        // code el IV en Base64 para enviarlo como texto
         String ivBase64 = Base64.getEncoder().encodeToString(iv);
         
         return ivSpec;
@@ -414,13 +402,13 @@ public class ProtocoloServidor {
             String hmac = enviarHmacEstado(pOut, estado);
             String mensajeCompleto = estadoCifrado + ";" + hmac;
 
-            pOut.println(mensajeCompleto); // Enviar el estado cifrado + hmac estado al servidor
+            pOut.println(mensajeCompleto); // manda el estado cifrado + hmac estado al servidor
             return 9;
         
         } catch (Exception e) {
             System.err.println("Error al cifrar y enviar el estado: " + e.getMessage());
             e.printStackTrace();
-            return 0; // Reinicia en caso de error        
+            return 0; 
       }
     }
 
@@ -434,7 +422,7 @@ public class ProtocoloServidor {
         } catch (Exception e) {
             System.err.println("Error al calcular y enviar el HMAC del UID: " + e.getMessage());
             e.printStackTrace();
-            return ""; // Reinicia en caso de error        
+            return ""; 
       }
     }
 
