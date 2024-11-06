@@ -9,30 +9,30 @@ import java.io.*;
 
 public class ProtocoloServidor {
 
-    private static PublicKey llavePublica;
-    private static PrivateKey llavePrivada;
-    private static BigInteger P;
-    private static BigInteger G;
-    private static BigInteger Gx;
-    private static BigInteger x;
-    private static BigInteger gy;
-    private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
-    private static SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
-    private static IvParameterSpec ivSpec; // almacena el IV
-    private static String uid;
-    private static String uidDescifrado; // Declaración de uidDescifrado como variable de instancia
-    private static boolean hmac1Verificado;
-    private static boolean hmac2Verificado;
-    private static String packIdDescifrado;
-    private static String estadoPaquete="";
-    private static long tiempoEjecucion1, tiempoEjecucion2, tiempoEjecucion3, tiempoEjecucionTot; 
+    private   PublicKey llavePublica;
+    private   PrivateKey llavePrivada;
+    private   BigInteger P;
+    private   BigInteger G;
+    private   BigInteger Gx;
+    private   BigInteger x;
+    private   BigInteger gy;
+    private   SecretKey llaveSimetrica_cifrar; // Llave para cifrado (K_AB1)
+    private   SecretKey llaveSimetrica_MAC;    // Llave para MAC (K_AB2)
+    private   IvParameterSpec ivSpec; // almacena el IV
+    private   String uid;
+    private   String uidDescifrado; // Declaración de uidDescifrado como variable de instancia
+    private   boolean hmac1Verificado;
+    private   boolean hmac2Verificado;
+    private   String packIdDescifrado;
+    private   String estadoPaquete="";
+    private   long tiempoEjecucion1, tiempoEjecucion2, tiempoEjecucion3, tiempoEjecucionTot; 
 
-    private static final SecureRandom random = new SecureRandom();
-    private static final String rutaCarpetaServidor = "src/DatosServidor";
-    private static final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
-    private static final String rutaLlavePublica = "llave_publica.ser";
+    private   final SecureRandom random = new SecureRandom();
+    private   final String rutaCarpetaServidor = "src/DatosServidor";
+    private   final String rutaLlavePrivada = rutaCarpetaServidor + "/llave_privada.ser"; 
+    private   final String rutaLlavePublica = "llave_publica.ser";
 
-    public static void procesar(BufferedReader pIn, PrintWriter pOut, ArrayList<Paquete> tabla) throws IOException {
+    public   void procesar(BufferedReader pIn, PrintWriter pOut, ArrayList<Paquete> tabla) throws IOException {
 
         String inputLine;
         String outputLine = null;
@@ -218,7 +218,7 @@ public class ProtocoloServidor {
         }
     }
 
-    public static void generarP_G() throws Exception {
+    public   void generarP_G() throws Exception {
         // String ruta_openssl = System.getProperty("user.dir") + "\\lib\\OpenSSL-1.1.1h_win32\\openssl.exe";
         // Process process = Runtime.getRuntime().exec(ruta_openssl + " dhparam -text 1024");
         // Process p = new ProcessBuilder().inheritIO().command("command1").start();
@@ -247,7 +247,7 @@ public class ProtocoloServidor {
     }
 
 
-    private static void extraerP_G(String output) {
+    private   void extraerP_G(String output) {
         // Expresión regular para extraer el valor de prime
         Pattern primePattern = Pattern.compile("prime:\\s+([0-9a-fA-F:\\s]+)");
         // Expresión regular para extraer el valor de generator
@@ -269,7 +269,7 @@ public class ProtocoloServidor {
     }
 
    // Método para generar G^x
-    private static void generarGx() {
+    private   void generarGx() {
         if (P == null || G == null) {
             throw new IllegalStateException("Los valores de P y G deben ser inicializados antes de llamar a generarGx.");
         }
@@ -280,7 +280,7 @@ public class ProtocoloServidor {
     }
 
     // Nuevo método para generar parámetros P, G y G^x, e imprimirlos
-    private static int generarParametrosEImprimir() {
+    private   int generarParametrosEImprimir() {
         try {
             // Genera los valores de P y G
             generarP_G();
@@ -299,7 +299,7 @@ public class ProtocoloServidor {
         }
     }
     // Método para calcular las llaves simétricas K_AB1 y K_AB2
-    private static void calcularLlavesSimetricas() {
+    private   void calcularLlavesSimetricas() {
         try {
             // Calcular la clave maestra (G^y)^x mod P
             BigInteger claveMaestra = gy.modPow(x, P);
@@ -326,7 +326,7 @@ public class ProtocoloServidor {
     }
 
     //  cargar la llave pública desde el archivo
-    public static void cargarLlavePublica() {
+    public   void cargarLlavePublica() {
         llavePublica = (PublicKey) cargarLlaveDesdeArchivo(rutaLlavePublica);
         if (llavePublica != null) {
             System.out.println("0.a Llave pública cargada desde " + rutaLlavePublica);
@@ -334,7 +334,7 @@ public class ProtocoloServidor {
     }
 
     //  cargar la llave privada desde el archivo
-    public static void cargarLlavePrivada() {
+    public   void cargarLlavePrivada() {
         llavePrivada = (PrivateKey) cargarLlaveDesdeArchivo(rutaLlavePrivada);
         if (llavePrivada != null) {
             System.out.println("0.a Llave privada cargada desde " + rutaLlavePrivada);
@@ -342,7 +342,7 @@ public class ProtocoloServidor {
     }
 
 
-    private static Object cargarLlaveDesdeArchivo(String rutaArchivo) {
+    private   Object cargarLlaveDesdeArchivo(String rutaArchivo) {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(rutaArchivo))) {
             return ois.readObject();
         } catch (Exception e) {
@@ -353,7 +353,7 @@ public class ProtocoloServidor {
     }
 
 
-    private static IvParameterSpec generarIV() {
+    private   IvParameterSpec generarIV() {
         byte[] iv = new byte[16]; // IV de 16 bytes
         random.nextBytes(iv); // Genera un IV aleatorio
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -364,13 +364,13 @@ public class ProtocoloServidor {
         return ivSpec;
     }
 
-    private static void enviarIV(PrintWriter pOut, IvParameterSpec ivSpec) {
+    private   void enviarIV(PrintWriter pOut, IvParameterSpec ivSpec) {
         String ivBase64 = Base64.getEncoder().encodeToString(ivSpec.getIV());
         pOut.println(ivBase64); 
         System.out.println("12. IV enviado al cliente: " + ivBase64);
     }
 
-    public static String descrifradoSimetricoId(String uidCifrado, SecretKey llaveCifrado, IvParameterSpec iv) {
+    public   String descrifradoSimetricoId(String uidCifrado, SecretKey llaveCifrado, IvParameterSpec iv) {
         try {
             String uidDescifrado = Seguridad.descifradoSimetrico(uidCifrado, llaveCifrado, iv);
             //boolean verificacionHMAC = verificarHMacUid(uidDescifrado, llaveSimetrica_MAC, uidDescifrado);
@@ -383,7 +383,7 @@ public class ProtocoloServidor {
         }
     }
     
-    public static boolean verificarHMacUid(String hmacRecibido, SecretKey llaveSimetrica_MAC, String uidEsperado) {
+    public   boolean verificarHMacUid(String hmacRecibido, SecretKey llaveSimetrica_MAC, String uidEsperado) {
         try {
             String hmacCalculado = Seguridad.calcularHMAC(llaveSimetrica_MAC, uidEsperado);
             return hmacCalculado.equals(hmacRecibido);
@@ -395,7 +395,7 @@ public class ProtocoloServidor {
     }
     
 
-    private static int enviarEstadoCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String estado) {
+    private   int enviarEstadoCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String estado) {
         try {
             long inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
             String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
@@ -424,7 +424,7 @@ public class ProtocoloServidor {
       }
     }
 
-    public static String enviarHmacEstado(PrintWriter pOut, String estado){
+    public   String enviarHmacEstado(PrintWriter pOut, String estado){
         try {
             String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, estado);
             System.out.println("HMAC del estado: " + hmac);

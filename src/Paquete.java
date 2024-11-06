@@ -2,8 +2,8 @@ public class Paquete {
     private String id;
     private String uid;
     private int estado;
-    int[] estadosnum = {0, 1, 2, 3, 4, 5, 6};
-    String[] estados = {"ENOFICINA", "RECOGIDO", "ENCLASIFICACION", "DESPACHADO", "ENENTREGA", "ENTREGADO", "DESCONOCIDO"};
+    int[] estadosnum = {0, 1, 2, 3, 4, 5};
+    String[] estados = {"ENOFICINA", "RECOGIDO", "ENCLASIFICACION", "DESPACHADO", "ENENTREGA", "ENTREGADO"};
 
     public Paquete(String id, String uid, int estado) {
         this.id = id;

@@ -111,8 +111,8 @@ public class Servidor {
     }
 
     public static ArrayList<Paquete> tablaDePaquete(){
-        int[] estadosnum = {0, 1, 2, 3, 4, 5, 6};
-        String[] estados = {"ENOFICINA", "RECOGIDO", "ENCLASIFICACION", "DESPACHADO", "ENENTREGA", "ENTREGADO", "DESCONOCIDO"};
+        int[] estadosnum = {0, 1, 2, 3, 4, 5};
+        String[] estados = {"ENOFICINA", "RECOGIDO", "ENCLASIFICACION", "DESPACHADO", "ENENTREGA", "ENTREGADO"};
         Random random = new Random();
         ArrayList<Paquete> paquetes = new ArrayList<>();
         for (int i = 0; i<32; i++){

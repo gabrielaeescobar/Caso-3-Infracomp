@@ -11,24 +11,24 @@ import javax.crypto.spec.*;
 
 public class ProtocoloCliente {
 
-    private static PublicKey llavePublica;
-    private static BigInteger p;
-    private static BigInteger g;
-    private static BigInteger gx;
-    private static BigInteger gy;
-    private static BigInteger y;  // Secreto y del cliente
-    private static SecureRandom random = new SecureRandom();
-    private static SecretKey llaveSimetrica_cifrar; // Llave para cifrado
-    private static SecretKey llaveSimetrica_MAC;    // Llave para MAC
-    private static IvParameterSpec ivVectorIni; // vector que manda el servidor
-    private static final String rutaLlavePublica = "llave_publica.ser";
-    private static final String reto = generarRetoAleatorio(); 
-    private static String estadoDescifrado;
-    private static String hmacEstadoVerificado;
+    private   PublicKey llavePublica;
+    private   BigInteger p;
+    private   BigInteger g;
+    private   BigInteger gx;
+    private   BigInteger gy;
+    private   BigInteger y;  // Secreto y del cliente
+    private   SecureRandom random = new SecureRandom();
+    private   SecretKey llaveSimetrica_cifrar; // Llave para cifrado
+    private   SecretKey llaveSimetrica_MAC;    // Llave para MAC
+    private   IvParameterSpec ivVectorIni; // vector que manda el servidor
+    private   final String rutaLlavePublica = "llave_publica.ser";
+    private   final String reto = generarRetoAleatorio(); 
+    private   String estadoDescifrado;
+    private   String hmacEstadoVerificado;
 
-    private static String retoCifrado;
+    private   String retoCifrado;
             
-    public static void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut, String uid, String paqueteid) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+    public   void procesar(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut, String uid, String paqueteid) throws IOException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
         cargarLlavePublica();
         
         int estado = 1;
@@ -73,7 +73,7 @@ public class ProtocoloCliente {
         }
     }
 
-    private static int estadoInicial(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
+    private   int estadoInicial(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
         // System.out.println("Escriba el mensaje para enviar: ");
         // String fromUser = stdIn.readLine();
 
@@ -89,7 +89,7 @@ public class ProtocoloCliente {
         // return 1;
     }
 
-    private static int enviarReto(PrintWriter pOut, BufferedReader pIn) throws IOException {
+    private   int enviarReto(PrintWriter pOut, BufferedReader pIn) throws IOException {
         try {
             long inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
             retoCifrado = Seguridad.cifradoAsimetrico(reto, llavePublica);
@@ -122,7 +122,7 @@ public class ProtocoloCliente {
         return 2;
     }
 
-    private static int manejarComando(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
+    private   int manejarComando(BufferedReader stdIn, BufferedReader pIn, PrintWriter pOut) throws IOException {
         System.out.println("Escriba el mensaje para enviar (OK para terminar): ");
         String fromUser = stdIn.readLine();
         
@@ -150,7 +150,7 @@ public class ProtocoloCliente {
     }
 
 
-    private static int verificarRta(String fromServer,BufferedReader pIn, PrintWriter pOut) throws IOException {
+    private   int verificarRta(String fromServer,BufferedReader pIn, PrintWriter pOut) throws IOException {
         
         if (fromServer != null && fromServer.equals(reto)) { // Verifica si Rta == Reto
             System.out.println("5. Verificación exitosa de Rta == Reto");
@@ -163,7 +163,7 @@ public class ProtocoloCliente {
         return 0; // Reinicia el protocolo si no coincide
     }
 
-    private static int verificarFirmaServidor(BufferedReader pIn, PrintWriter pOut) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    private   int verificarFirmaServidor(BufferedReader pIn, PrintWriter pOut) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         try {
             String fromServer = pIn.readLine();
             if (fromServer == null) {
@@ -203,7 +203,7 @@ public class ProtocoloCliente {
 
     }
     
-    private static int enviarUidCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String uid) {
+    private   int enviarUidCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String uid) {
         try {
             String uidCifrado = Seguridad.cifradoSimetrico(uid, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("UID cifrado: " + uidCifrado);
@@ -219,7 +219,7 @@ public class ProtocoloCliente {
       }
     }
 
-    public static int enviarHmacUid(PrintWriter pOut, String uid){
+    public   int enviarHmacUid(PrintWriter pOut, String uid){
         try {
             String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, uid);
             System.out.println("HMAC del UID: " + hmac);
@@ -234,7 +234,7 @@ public class ProtocoloCliente {
       }
     }
 
-    private static int enviarPaqueteidCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String paqueteid) {
+    private   int enviarPaqueteidCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String paqueteid) {
         try {
             String paqueteidCifrado = Seguridad.cifradoSimetrico(paqueteid, llaveSimetrica_cifrar, ivVectorIni);
             System.out.println("Paquete cifrado: " + paqueteidCifrado);
@@ -250,7 +250,7 @@ public class ProtocoloCliente {
       }
     }
 
-    public static int enviarHmacPaqueteid(PrintWriter pOut, String paqueteid){
+    public   int enviarHmacPaqueteid(PrintWriter pOut, String paqueteid){
         try {
             String hmac = Seguridad.calcularHMAC(llaveSimetrica_MAC, paqueteid);
             System.out.println("HMAC del Paquete: " + hmac);
@@ -265,14 +265,14 @@ public class ProtocoloCliente {
       }
     }
 
-    private static IvParameterSpec recibirIV(BufferedReader pIn) throws IOException {
+    private   IvParameterSpec recibirIV(BufferedReader pIn) throws IOException {
         String ivBase64 = pIn.readLine(); // Recibe el IV 
         byte[] iv = Base64.getDecoder().decode(ivBase64); // Decodifica el IV
         return new IvParameterSpec(iv); // Crea el IvParameterSpec para usar en cifrado
     }
 
     // Método para generar G^y
-    private static void generarGy() {
+    private   void generarGy() {
         if (p == null || g == null) {
             throw new IllegalStateException("Los valores de P y G deben ser inicializados antes de llamar a generarGx.");
         }
@@ -282,7 +282,7 @@ public class ProtocoloCliente {
         gy = g.modPow(y, p); // Calculamos G^x mod P
     }
 
-    private static int calcularLlavesSimetricas() {
+    private   int calcularLlavesSimetricas() {
         try {
             // Paso 1: Generar el valor secreto y del cliente
             generarGy();
@@ -318,14 +318,14 @@ public class ProtocoloCliente {
     }
 
 
-    private static void cargarLlavePublica() {
+    private   void cargarLlavePublica() {
         llavePublica = (PublicKey) cargarLlaveDesdeArchivo(rutaLlavePublica);
         if (llavePublica != null) {
             System.out.println("0.b Llave pública cargada desde " + rutaLlavePublica);
         }
     }
 
-    private static Object cargarLlaveDesdeArchivo(String rutaArchivo) {
+    private   Object cargarLlaveDesdeArchivo(String rutaArchivo) {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(rutaArchivo))) {
             return ois.readObject();
         } catch (Exception e) {
@@ -335,13 +335,13 @@ public class ProtocoloCliente {
         }
     }
 
-    private static String generarRetoAleatorio() {
+    private   String generarRetoAleatorio() {
         SecureRandom random = new SecureRandom();
         int numeroAleatorio = random.nextInt(90000) + 10000;
         return String.valueOf(numeroAleatorio);
     }
     
-    public static String descrifradoSimetricoEstado(String estado, SecretKey llaveCifrado, IvParameterSpec iv) {
+    public   String descrifradoSimetricoEstado(String estado, SecretKey llaveCifrado, IvParameterSpec iv) {
         try {
             String estadoDescifrado = Seguridad.descifradoSimetrico(estado, llaveCifrado, iv);
             //boolean verificacionHMAC = verificarHMacUid(uidDescifrado, llaveSimetrica_MAC, uidDescifrado);
@@ -354,7 +354,7 @@ public class ProtocoloCliente {
         }
     }
     
-    public static boolean verificarHMacEstado(String hmacRecibido, SecretKey llaveSimetrica_MAC, String estadoEsperado) {
+    public   boolean verificarHMacEstado(String hmacRecibido, SecretKey llaveSimetrica_MAC, String estadoEsperado) {
         try {
             String hmacCalculado = Seguridad.calcularHMAC(llaveSimetrica_MAC, estadoEsperado);
             System.out.println("HMAC CALCULADO"+hmacCalculado);
@@ -368,7 +368,7 @@ public class ProtocoloCliente {
         }
     }
     
-    public static int verificarFinal(BufferedReader pIn, PrintWriter pOut){
+    public   int verificarFinal(BufferedReader pIn, PrintWriter pOut){
         try {
 
             String fromServer = pIn.readLine();
@@ -404,7 +404,7 @@ public class ProtocoloCliente {
         }
     }
 
-    private static int enviarTerminar(PrintWriter pOut, BufferedReader pIn)  {
+    private   int enviarTerminar(PrintWriter pOut, BufferedReader pIn)  {
         try {
             pOut.println("TERMINAR");
             System.out.println("18. Enviar TERMINAR");

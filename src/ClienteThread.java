@@ -17,7 +17,7 @@ public class ClienteThread extends Thread {
     }
 
     public void run() {
-        System.out.println("-------------- INICIA CLIENTE CON UID: "+uid +  " --------------");
+        System.out.println("-------------- INICIA CLIENTE CON UID: " + uid + " --------------");
 
         try (
             Socket socket = new Socket(hostName, portNumber);
@@ -26,12 +26,15 @@ public class ClienteThread extends Thread {
             BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
         ) {
             System.out.println("Comienza cliente " + uid);
-            ProtocoloCliente.procesar(teclado, lector, escritor, uid, paqueteid);
+
+            // Crear una instancia de ProtocoloCliente
+            ProtocoloCliente protocoloCliente = new ProtocoloCliente();
+
+            // Llamar al método procesar en la instancia
+            protocoloCliente.procesar(teclado, lector, escritor, uid, paqueteid);
         } catch (Exception e) {
             System.err.println("Error en ClienteThread: " + e.getMessage());
             e.printStackTrace();
         }
-        System.out.println("-------------- TERMINO CLIENTE CON UID: "+uid +  " --------------");
-
-    }
-}
+        System.out.println("-------------- TERMINO CLIENTE CON UID: " + uid + " --------------");
+    }}
