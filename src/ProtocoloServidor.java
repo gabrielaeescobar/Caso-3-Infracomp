@@ -19,7 +19,7 @@ public class ProtocoloServidor {
     private boolean hmac1Verificado,hmac2Verificado;
     private String packIdDescifrado;
     private String estadoPaquete="";
-    private long tiempoEjecucion1, tiempoEjecucion2, tiempoEjecucion3, tiempoEjecucionTot; 
+    private double tiempoEjecucion1, tiempoEjecucion2, tiempoEjecucion3, tiempoEjecucionTot; 
 
     private final SecureRandom random = new SecureRandom();
     private final String rutaCarpetaServidor = "src/DatosServidor";
@@ -65,10 +65,10 @@ public class ProtocoloServidor {
                 case 2:
                     try {
 
-                        long inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
+                        double inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
                         generarParametrosEImprimir(); // Generar P, G, y G^x
-                        long finTiempo = System.currentTimeMillis(); // Fin del cronómetro
-                        long tiempoEjecucion = finTiempo - inicioTiempo;
+                        double finTiempo = System.currentTimeMillis(); // Fin del cronómetro
+                        double tiempoEjecucion = finTiempo - inicioTiempo;
                         System.out.println("### Tiempo de generación de P, G y G^x: " + tiempoEjecucion + " ms");
 
 
@@ -113,11 +113,11 @@ public class ProtocoloServidor {
                 case 5: 
                     // Paso 15: Verificar UID y paquete_id con sus respectivos HMAC en un solo paso
                     try {
-                        long inicioTiempo1 = System.currentTimeMillis(); // Inicio del cronómetro
+                        double inicioTiempo1 = System.currentTimeMillis(); // Inicio del cronómetro
                         uidDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
                         System.out.println("15.a Descifrar uid");
                         estado++;
-                        long finTiempo1 = System.currentTimeMillis(); // Fin del cronómetro
+                        double finTiempo1 = System.currentTimeMillis(); // Fin del cronómetro
                         tiempoEjecucion1 = finTiempo1 - inicioTiempo1;
 
                     } catch (Exception e) {
@@ -128,13 +128,13 @@ public class ProtocoloServidor {
                     break;
 
                 case 6:
-                    long inicioTiempo2 = System.currentTimeMillis(); // Inicio del cronómetro
+                    double inicioTiempo2 = System.currentTimeMillis(); // Inicio del cronómetro
 
                     hmac1Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, uidDescifrado);
                     if (hmac1Verificado){
                         estado++;
                         System.out.println("15.b HMAC uid verificado");
-                        long finTiempo2 = System.currentTimeMillis(); // Fin del cronómetro
+                        double finTiempo2 = System.currentTimeMillis(); // Fin del cronómetro
                         tiempoEjecucion2 = finTiempo2 - inicioTiempo2;
 
 
@@ -144,23 +144,23 @@ public class ProtocoloServidor {
                     }
                     break;
                 case 7:
-                    long inicioTiempo3 = System.currentTimeMillis(); // Inicio del cronómetro
+                    double inicioTiempo3 = System.currentTimeMillis(); // Inicio del cronómetro
 
                     packIdDescifrado = descrifradoSimetricoId(inputLine, llaveSimetrica_cifrar, ivSpec);
                     System.out.println("15.c Descifrar packid");
                     estado++;
-                    long finTiempo3 = System.currentTimeMillis(); // Fin del cronómetro
+                    double finTiempo3 = System.currentTimeMillis(); // Fin del cronómetro
                     tiempoEjecucion3 = finTiempo3 - inicioTiempo3;
                     break;
 
                 case 8:
-                    long inicioTiempo4 = System.currentTimeMillis(); // Inicio del cronómetro
+                    double inicioTiempo4 = System.currentTimeMillis(); // Inicio del cronómetro
 
                     hmac2Verificado= verificarHMacUid(inputLine, llaveSimetrica_MAC, packIdDescifrado);
                     if (hmac2Verificado){
                         estado++;
                         System.out.println("15.d HMAC packid verificado");
-                        long finTiempo4 = System.currentTimeMillis(); // Fin del cronómetro
+                        double finTiempo4 = System.currentTimeMillis(); // Fin del cronómetro
                         tiempoEjecucionTot = (finTiempo4 - inicioTiempo4)+tiempoEjecucion1+tiempoEjecucion2+tiempoEjecucion3;
                         // System.out.println("### tiempo 1: "+ tiempoEjecucion1);
                         // System.out.println("### tiempo 2: "+ tiempoEjecucion2);
@@ -385,18 +385,18 @@ public class ProtocoloServidor {
 
     private   int enviarEstadoCifrado(PrintWriter pOut, IvParameterSpec ivVectorIni, String estado) {
         try {
-            long inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
+            double inicioTiempo = System.currentTimeMillis(); // Inicio del cronómetro
             String estadoCifrado = Seguridad.cifradoSimetrico(estado, llaveSimetrica_cifrar, ivVectorIni);
-            long finTiempo = System.currentTimeMillis(); // Fin del cronómetro
-            long tiempoEjecucion = finTiempo - inicioTiempo;
+            double finTiempo = System.currentTimeMillis(); // Fin del cronómetro
+            double tiempoEjecucion = finTiempo - inicioTiempo;
             System.out.println("Estado cifrado: " + estadoCifrado);
             System.out.println("16a. Enviar C(K_AB1, estado)");
             System.out.println("### Tiempo en cifrar el estado (SIMETRICO): " + tiempoEjecucion + " ms");
 
-            long inicioTiempoAsim = System.currentTimeMillis(); // Inicio del cronómetro
+            double inicioTiempoAsim = System.currentTimeMillis(); // Inicio del cronómetro
             String estadoCifradoAsim = Seguridad.cifradoAsimetrico(estadoCifrado, llavePublica);
-            long finTiempoAsim = System.currentTimeMillis(); // Fin del cronómetro
-            long tiempoEjecucionAsim = finTiempoAsim - inicioTiempoAsim;
+            double finTiempoAsim = System.currentTimeMillis(); // Fin del cronómetro
+            double tiempoEjecucionAsim = finTiempoAsim - inicioTiempoAsim;
             System.out.println("### Tiempo en cifrar el estado (ASIMETRICO): " + tiempoEjecucionAsim + " ms");
 
             String hmac = enviarHmacEstado(pOut, estado);
