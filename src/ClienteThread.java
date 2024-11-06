@@ -17,6 +17,8 @@ public class ClienteThread extends Thread {
     }
 
     public void run() {
+        System.out.println("-------------- INICIA CLIENTE CON UID: "+uid +  " --------------");
+
         try (
             Socket socket = new Socket(hostName, portNumber);
             PrintWriter escritor = new PrintWriter(socket.getOutputStream(), true);
@@ -29,5 +31,7 @@ public class ClienteThread extends Thread {
             System.err.println("Error en ClienteThread: " + e.getMessage());
             e.printStackTrace();
         }
+        System.out.println("-------------- TERMINO CLIENTE CON UID: "+uid +  " --------------");
+
     }
 }

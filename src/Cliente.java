@@ -38,9 +38,8 @@ public class Cliente {
         List<ClienteThread> clientes = new ArrayList<>();
 
         for (int i = 0; i < numeroClientes; i++) {
-            String uid = "user_" + i;
+            String uid = "u_" + i;
             String paqueteid = "pack_" + i;
-            System.out.println("INICIA CLIENTE CON UID: "+uid);
 
             ClienteThread cliente = new ClienteThread(SERVIDOR, PUERTO, uid, paqueteid);
             clientes.add(cliente);
@@ -98,4 +97,7 @@ public class Cliente {
         escritor.close();
         lector.close();
     }
+
+
+    
 }
