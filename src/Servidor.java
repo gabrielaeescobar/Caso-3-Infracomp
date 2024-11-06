@@ -18,22 +18,55 @@ public class Servidor {
         boolean continuar0 = true;
 
     
-    while (continuar0){
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Bienvenido al Servidor. Seleccione una opción:");
-        System.out.println("1: Generar pareja de llaves asimétricas del servidor y almacenarlas en archivos");
-        System.out.println("2: Ejecutar creando los delegados (threads) para cada cliente");
-        System.out.println("3: Salir");
+        while (continuar0){
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Bienvenido al Servidor. Seleccione una opción:");
+            System.out.println("1: Generar pareja de llaves asimétricas del servidor y almacenarlas en archivos");
+            System.out.println("2: Escenario 2-> Ejecutar creando los delegados (threads) para cada cliente");
+            System.out.println("3: Escenario 3-> Ejecutar un solo servidor");
 
-        int opcion = scanner.nextInt();
-        if (opcion == 1) {
-            generarLLavesAsimetrica();
-            System.out.println("Las llaves han sido generadas y almacenadas en archivos.");
+            System.out.println("4: Salir");
 
-        }
-        else if (opcion == 2){
+            int opcion = scanner.nextInt();
+            if (opcion == 1) {
+                generarLLavesAsimetrica();
+                System.out.println("Las llaves han sido generadas y almacenadas en archivos.");
 
+            }
+            else if (opcion == 2){
+
+                ServerSocket ss = null;
+                boolean continuar = true;
+                int threadId = 0; 
+            
+                System.out.println("Main Server ...");
+            
+                try {
+                    ss = new ServerSocket(3400);
+                } catch (IOException e) {
+                    System.err.println("No se pudo crear el socket en el puerto: " );
+                    System.exit(-1);
+                }
+            
+                while (continuar) {
+                    // crear el thread y lanzarlo.
+            
+                    // crear el socket
+                    Socket socket = ss.accept();
+            
+                    // crear el thread con el socket y el id
+                    ThreadServidor thread = new ThreadServidor(socket, threadId++, tabla);
+                    // aquí debe hacer una modificación porque todos los threads tienen un identificador diferente
+            
+                    // start
+                    thread.start();
+                }
+                ss.close();
+            }
+        else if (opcion==3) {
             ServerSocket ss = null;
+            //Socket sktCliente = null;
+
             boolean continuar = true;
             int threadId = 0; 
         
@@ -45,23 +78,31 @@ public class Servidor {
                 System.err.println("No se pudo crear el socket en el puerto: " );
                 System.exit(-1);
             }
+    
+            Socket socket = ss.accept();
         
-            while (continuar) {
-                // crear el thread y lanzarlo.
-        
-                // crear el socket
-                Socket socket = ss.accept();
-        
-                // crear el thread con el socket y el id
-                ThreadServidor thread = new ThreadServidor(socket, threadId++, tabla);
-                // aquí debe hacer una modificación porque todos los threads tienen un identificador diferente
-        
-                // start
-                thread.start();
+            try {
+                PrintWriter escritor = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader lector = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                // Crear una instancia de ProtocoloServidor
+                for (int i=0; i<32;i++){
+                    System.out.println("------INICIO DE CONSULTA "+ i+"------");
+                    ProtocoloServidor protocoloServidor = new ProtocoloServidor();
+                    protocoloServidor.procesar(lector, escritor, tabla);
+                    System.out.println("------FIN DE CONSULTA "+ i+"------");
+
+                }
+    
+                escritor.close();
+                lector.close();
+                socket.close();
+    
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             ss.close();
-        }
-        else if (opcion==3) continuar0 = false;
+        }      
+        else if (opcion==4) continuar0 = false;
 
     }
 
@@ -112,5 +153,9 @@ public class Servidor {
         return paquetes;
     }
     
+    public void escenarioUno(){
+        
+    }
 
+    
 }
