@@ -1,6 +1,5 @@
 ## Realizado por:
-Maria Alejandra Pinzon
-Gabriela Escobar
+Maria Alejandra Pinzon y Gabriela Escobar
 
 ## UML
 
