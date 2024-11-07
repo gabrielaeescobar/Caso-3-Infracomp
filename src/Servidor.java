@@ -22,9 +22,8 @@ public class Servidor {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Bienvenido al Servidor. Seleccione una opción:");
             System.out.println("1: Generar pareja de llaves asimétricas del servidor y almacenarlas en archivos");
-            System.out.println("2: Escenario 2-> Ejecutar creando los delegados (threads) para cada cliente");
-            System.out.println("3: Escenario 3-> Ejecutar un solo servidor");
-
+            System.out.println("2: FORMA NORMAL- Escenario 2-> Ejecutar creando los delegados (threads) para cada cliente");
+            System.out.println("3: Escenario 1-> Ejecutar un solo servidor");
             System.out.println("4: Salir");
 
             int opcion = scanner.nextInt();
